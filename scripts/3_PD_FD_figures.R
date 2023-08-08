@@ -16,6 +16,8 @@
 library(tidyverse)
 library(patchwork)
 library(ggpubr)
+library(tidybayes)
+library(bayestestR)
 
 # Load dataframes with results
 PD_FD_habitats <- read_csv("outputs/PD_FD_habitats.csv")
@@ -196,7 +198,8 @@ PD_FD_metrics_diff <- left_join(PD_FD_metrics_sh,
          sesFRic = sesFRic_sp - sesFRic_sh,
          sesFEve = sesFEve_sp - sesFEve_sh,
          sesFDiv = sesFDiv_sp - sesFDiv_sh,
-         sesFDis = sesFDis_sp - sesFDis_sh)  
+         sesFDis = sesFDis_sp - sesFDis_sh)
+
 
 # Function plots
 P_func_diff <- function(x){
@@ -292,3 +295,170 @@ ggsave(filename = "Fig_SOM.png",
        units = "cm",
        bg = "white")
 
+
+
+### 5. Additional Results ####
+## Computing probability of direction
+## 
+## 5.1 Habitats ####
+## Differences between forest and pasture-60%
+## Pasture-60% and pasture-10%
+
+PD_FD_60 <- filter(PD_FD_habitats, habitat == "pasture_0.6")
+PD_FD_10 <- filter(PD_FD_habitats, habitat == "pasture_0.1")
+PD_FD_Fo <- filter(PD_FD_habitats, habitat == "forest")
+
+PD_FD_pas_diff <- left_join(PD_FD_60,
+                            PD_FD_10, 
+                            by = c("iter_id"),
+                            suffix = c("_0.6", "_0.1"))
+
+PD_FD_hab_diff <- left_join(PD_FD_60,
+                                PD_FD_Fo, 
+                                by = c("iter_id"),
+                                suffix = c("_0.6", "_Fo"))
+
+pas_diff <- PD_FD_pas_diff %>% 
+  mutate(., PD = PD_0.6 - PD_0.1,
+         MPD = MPD_0.6 - MPD_0.1,
+         MNTD = MNTD_0.6 - MNTD_0.1,
+         ED = ED_0.6 - ED_0.1,
+         EDR = EDR_0.6 - EDR_0.1,
+         FRic = FRic_0.6 - FRic_0.1,
+         FEve = FEve_0.6 - FEve_0.1,
+         FDiv = FDiv_0.6 - FDiv_0.1,
+         FDis = FDis_0.6 - FDis_0.1) %>% 
+  na.omit %>%
+  mutate(pd_PD = p_direction(PD),
+         pd_MPD = p_direction(MPD),
+         pd_MNTD = p_direction(MNTD),
+         pd_ED = p_direction(ED),
+         pd_EDR = p_direction(EDR),
+         pd_FRic = p_direction(FRic),
+         pd_FEve = p_direction(FEve),
+         pd_FDiv = p_direction(FDiv),
+         pd_FDis = p_direction(FDis)) %>% 
+  select(., starts_with("pd_"))
+
+hab_diff <- PD_FD_hab_diff %>% 
+  mutate(., PD = PD_Fo - PD_0.6,
+         MPD = MPD_Fo - MPD_0.6,
+         MNTD = MNTD_Fo - MNTD_0.6,
+         ED = ED_Fo - ED_0.6,
+         EDR = EDR_Fo - EDR_0.6,
+         FRic = FRic_Fo - FRic_0.6,
+         FEve = FEve_Fo - FEve_0.6,
+         FDiv = FDiv_Fo - FDiv_0.6,
+         FDis = FDis_Fo - FDis_0.6) %>% 
+  na.omit %>%
+  mutate(pd_PD = p_direction(PD),
+         pd_MPD = p_direction(MPD),
+         pd_MNTD = p_direction(MNTD),
+         pd_ED = p_direction(ED),
+         pd_EDR = p_direction(EDR),
+         pd_FRic = p_direction(FRic),
+         pd_FEve = p_direction(FEve),
+         pd_FDiv = p_direction(FDiv),
+         pd_FDis = p_direction(FDis)) %>% 
+  select(., starts_with("pd_"))
+
+
+## 5.2 Sharing/sparing
+
+# probability of direction along increasing unit
+
+prob_dir_diff_low <- c()
+for (n in n_pts) {
+prob_dir_diff_low[[n]] <- PD_FD_metrics_diff %>% 
+  filter(., n_pt == n, Yield == "Low") %>%
+  mutate(pd_PD = p_direction(PD),
+         pd_MPD = p_direction(MPD),
+         pd_MNTD = p_direction(MNTD),
+         pd_sesPD = p_direction(sesPD),
+         pd_sesMPD = p_direction(sesMPD),
+         pd_sesMNTD = p_direction(sesMNTD),
+         pd_ED = p_direction(ED),
+         pd_EDR = p_direction(EDR),
+         pd_FRic = p_direction(FRic),
+         pd_FEve = p_direction(FEve),
+         pd_FDiv = p_direction(FDiv),
+         pd_FDis = p_direction(FDis),
+         pd_sesFRic = p_direction(sesFRic),
+         pd_sesFEve = p_direction(sesFEve),
+         pd_sesFDiv = p_direction(sesFDiv),
+         pd_sesFDis = p_direction(sesFDis)) %>% 
+  select(., pd_PD:pd_sesFDis) %>% 
+  mutate_all(., as.numeric)
+}
+prob_dir_diff_low <- bind_rows(prob_dir_diff_low, .id = "n_pt") %>% 
+  group_by(., n_pt) %>% 
+  summarise_all(., mean)
+
+
+
+prob_dir_diff_high <- c()
+for (n in n_pts) {
+  prob_dir_diff_high[[n]] <- PD_FD_metrics_diff %>% 
+    filter(., n_pt == n, Yield == "High") %>%
+    mutate(pd_PD = p_direction(PD),
+           pd_MPD = p_direction(MPD),
+           pd_MNTD = p_direction(MNTD),
+           pd_sesPD = p_direction(sesPD),
+           pd_sesMPD = p_direction(sesMPD),
+           pd_sesMNTD = p_direction(sesMNTD),
+           pd_ED = p_direction(ED),
+           pd_EDR = p_direction(EDR),
+           pd_FRic = p_direction(FRic),
+           pd_FEve = p_direction(FEve),
+           pd_FDiv = p_direction(FDiv),
+           pd_FDis = p_direction(FDis),
+           pd_sesFRic = p_direction(sesFRic),
+           pd_sesFEve = p_direction(sesFEve),
+           pd_sesFDiv = p_direction(sesFDiv),
+           pd_sesFDis = p_direction(sesFDis)) %>% 
+    select(., pd_PD:pd_sesFDis) %>% 
+    mutate_all(., as.numeric)
+}
+
+prob_dir_diff_high <- bind_rows(prob_dir_diff_high, .id = "n_pt") %>% 
+  mutate(., n_pt = as.numeric(n_pt)) %>% 
+  group_by(., n_pt) %>% 
+  summarise_all(., mean)
+
+
+# Plots
+ggplot(prob_dir_diff_low, aes(x = n_pt)) + 
+  geom_point(aes(y = pd_PD, color = "PD")) +
+  geom_point(aes(y = pd_MPD, color = "MPD")) +
+  geom_point(aes(y = pd_MNTD, color = "MNTD")) +
+  geom_point(aes(y = pd_ED, color = "ED")) +
+  geom_point(aes(y = pd_EDR, color = "EDR")) +
+  geom_point(aes(y = pd_FRic, color = "FRic")) +
+  geom_point(aes(y = pd_FEve, color = "FEve")) +
+  geom_point(aes(y = pd_FDiv, color = "FDiv")) +
+  geom_point(aes(y = pd_FDis, color = "FDis")) +
+  geom_hline(yintercept = 0.975) +
+  ylab("Probability of direction") +
+  xlab("Number of management units") +
+  ggtitle("Low Yield") +
+  labs(color="Index") +
+  scale_color_viridis(discrete = T)
+
+# Plots
+ggplot(prob_dir_diff_high, aes(x = n_pt)) + 
+  geom_point(aes(y = pd_PD, color = "PD")) +
+  geom_point(aes(y = pd_MPD, color = "MPD")) +
+  geom_point(aes(y = pd_MNTD, color = "MNTD")) +
+  geom_point(aes(y = pd_ED, color = "ED")) +
+  geom_point(aes(y = pd_EDR, color = "EDR")) +
+  geom_point(aes(y = pd_FRic, color = "FRic")) +
+  geom_point(aes(y = pd_FEve, color = "FEve")) +
+  geom_point(aes(y = pd_FDiv, color = "FDiv")) +
+  geom_point(aes(y = pd_FDis, color = "FDis")) +
+  geom_hline(yintercept = 0.975) +
+  #ylim(0.95,1) +
+  ylab("Probability of direction") +
+  xlab("Number of management units") +
+  ggtitle("High Yield") +
+  labs(color="Index") +
+  scale_color_viridis(discrete = T)
