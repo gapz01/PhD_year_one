@@ -14,6 +14,7 @@
 
 # Required packages
 library(tidyverse)
+library (viridis)
 library(patchwork)
 library(ggpubr)
 library(tidybayes)
@@ -297,7 +298,7 @@ ggsave(filename = "Fig_SOM.png",
 
 
 
-### 5. Additional Results ####
+# 5. Additional Results ####
 ## Computing probability of direction
 ## 
 ## 5.1 Habitats ####
@@ -338,7 +339,8 @@ pas_diff <- PD_FD_pas_diff %>%
          pd_FEve = p_direction(FEve),
          pd_FDiv = p_direction(FDiv),
          pd_FDis = p_direction(FDis)) %>% 
-  select(., starts_with("pd_"))
+  select(., 45:53) %>% 
+  summarise_all(mean)
 
 hab_diff <- PD_FD_hab_diff %>% 
   mutate(., PD = PD_Fo - PD_0.6,
@@ -360,13 +362,32 @@ hab_diff <- PD_FD_hab_diff %>%
          pd_FEve = p_direction(FEve),
          pd_FDiv = p_direction(FDiv),
          pd_FDis = p_direction(FDis)) %>% 
-  select(., starts_with("pd_"))
+  select(., 45:53) %>% 
+  summarise_all(mean)
 
+prob_dir_habs <- bind_rows(pas_diff, hab_diff) %>% 
+  mutate(diff = c("Pasture 0.6 vs 0.1", "Pasture vs Forest"))
+
+ggplot(prob_dir_habs, aes(x = diff)) +
+  geom_point(aes(y = pd_PD, color = "PD")) +
+  geom_point(aes(y = pd_MPD, color = "MPD")) +
+  geom_point(aes(y = pd_MNTD, color = "MNTD")) +
+  geom_point(aes(y = pd_ED, color = "ED")) +
+  geom_point(aes(y = pd_EDR, color = "EDR")) +
+  geom_point(aes(y = pd_FRic, color = "FRic")) +
+  geom_point(aes(y = pd_FEve, color = "FEve")) +
+  geom_point(aes(y = pd_FDis, color = "FDiv")) +
+  geom_point(aes(y = pd_FDiv, color = "FDis")) +  
+  geom_hline(yintercept = 0.975) +
+  ylab("Probability of direction") +
+  xlab("Habitat difference") +
+  labs(color="Index") +
+  scale_color_viridis(discrete = T)
 
 ## 5.2 Sharing/sparing
 
 # probability of direction along increasing unit
-
+n_pts <- unique(PD_FD_metrics_diff$n_pt)
 prob_dir_diff_low <- c()
 for (n in n_pts) {
 prob_dir_diff_low[[n]] <- PD_FD_metrics_diff %>% 
@@ -393,7 +414,6 @@ prob_dir_diff_low[[n]] <- PD_FD_metrics_diff %>%
 prob_dir_diff_low <- bind_rows(prob_dir_diff_low, .id = "n_pt") %>% 
   group_by(., n_pt) %>% 
   summarise_all(., mean)
-
 
 
 prob_dir_diff_high <- c()
@@ -427,7 +447,7 @@ prob_dir_diff_high <- bind_rows(prob_dir_diff_high, .id = "n_pt") %>%
 
 
 # Plots
-ggplot(prob_dir_diff_low, aes(x = n_pt)) + 
+ggplot(prob_dir_diff_low, aes(x = as.numeric(n_pt))) + 
   geom_point(aes(y = pd_PD, color = "PD")) +
   geom_point(aes(y = pd_MPD, color = "MPD")) +
   geom_point(aes(y = pd_MNTD, color = "MNTD")) +
@@ -445,7 +465,7 @@ ggplot(prob_dir_diff_low, aes(x = n_pt)) +
   scale_color_viridis(discrete = T)
 
 # Plots
-ggplot(prob_dir_diff_high, aes(x = n_pt)) + 
+ggplot(prob_dir_diff_high, aes(x = as.numeric(n_pt))) + 
   geom_point(aes(y = pd_PD, color = "PD")) +
   geom_point(aes(y = pd_MPD, color = "MPD")) +
   geom_point(aes(y = pd_MNTD, color = "MNTD")) +
