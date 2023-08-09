@@ -482,3 +482,4 @@ ggplot(prob_dir_diff_high, aes(x = as.numeric(n_pt))) +
   ggtitle("High Yield") +
   labs(color="Index") +
   scale_color_viridis(discrete = T)
+
