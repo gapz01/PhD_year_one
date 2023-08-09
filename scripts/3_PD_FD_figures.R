@@ -312,14 +312,8 @@ PD_FD_Fo <- filter(PD_FD_habitats, habitat == "forest")
 PD_FD_pas_diff <- left_join(PD_FD_60,
                             PD_FD_10, 
                             by = c("iter_id"),
-                            suffix = c("_0.6", "_0.1"))
-
-PD_FD_hab_diff <- left_join(PD_FD_60,
-                                PD_FD_Fo, 
-                                by = c("iter_id"),
-                                suffix = c("_0.6", "_Fo"))
-
-pas_diff <- PD_FD_pas_diff %>% 
+                            suffix = c("_0.6", "_0.1")) %>%
+  select(., -c(habitat_0.6, habitat_0.1)) %>% 
   mutate(., PD = PD_0.6 - PD_0.1,
          MPD = MPD_0.6 - MPD_0.1,
          MNTD = MNTD_0.6 - MNTD_0.1,
@@ -328,7 +322,8 @@ pas_diff <- PD_FD_pas_diff %>%
          FRic = FRic_0.6 - FRic_0.1,
          FEve = FEve_0.6 - FEve_0.1,
          FDiv = FDiv_0.6 - FDiv_0.1,
-         FDis = FDis_0.6 - FDis_0.1) %>% 
+         FDis = FDis_0.6 - FDis_0.1) %>%
+  select(., PD:FDis) %>% 
   na.omit %>%
   mutate(pd_PD = p_direction(PD),
          pd_MPD = p_direction(MPD),
@@ -338,11 +333,43 @@ pas_diff <- PD_FD_pas_diff %>%
          pd_FRic = p_direction(FRic),
          pd_FEve = p_direction(FEve),
          pd_FDiv = p_direction(FDiv),
-         pd_FDis = p_direction(FDis)) %>% 
-  select(., 45:53) %>% 
-  summarise_all(mean)
+         pd_FDis = p_direction(FDis),
+         median_PD = median(PD),
+         CI_lo_PD = hdci(PD)[,1],
+         CI_hi_PD = hdci(PD)[,2],
+         median_MPD = median(MPD),
+         CI_lo_MPD = hdci(MPD)[,1],
+         CI_hi_MPD = hdci(MPD)[,2],
+         median_MNTD = median(MNTD),
+         CI_lo_MNTD = hdci(MNTD)[,1],
+         CI_hi_MNTD = hdci(MNTD)[,2],
+         median_ED = median(ED),
+         CI_lo_ED = hdci(ED)[,1],
+         CI_hi_ED = hdci(ED)[,2],
+         median_EDR = median(EDR),
+         CI_lo_EDR = hdci(EDR)[,1],
+         CI_hi_EDR = hdci(EDR)[,2],
+         median_FRic = median(FRic),
+         CI_lo_FRic = hdci(FRic)[,1],
+         CI_hi_FRic = hdci(FRic)[,2],
+         median_FEve = median(FEve),
+         CI_lo_FEve = hdci(FEve)[,1],
+         CI_hi_FEve = hdci(FEve)[,2],
+         median_FDiv = median(FDiv),
+         CI_lo_FDiv = hdci(FDiv)[,1],
+         CI_hi_FDiv = hdci(FDiv)[,2],
+         median_FDis = median(FDis),
+         CI_lo_FDis = hdci(FDis)[,1],
+         CI_hi_FDis = hdci(FDis)[,2]) %>%
+  select(., pd_PD:CI_hi_FDis) %>%              # change to CI_hi_FDis
+summarise_all(mean)
 
-hab_diff <- PD_FD_hab_diff %>% 
+
+PD_FD_hab_diff <- left_join(PD_FD_Fo,
+                            PD_FD_60, 
+                            by = c("iter_id"),
+                            suffix = c("_Fo", "_0.6")) %>%
+  select(., -c(habitat_Fo, habitat_0.6)) %>% 
   mutate(., PD = PD_Fo - PD_0.6,
          MPD = MPD_Fo - MPD_0.6,
          MNTD = MNTD_Fo - MNTD_0.6,
@@ -351,7 +378,8 @@ hab_diff <- PD_FD_hab_diff %>%
          FRic = FRic_Fo - FRic_0.6,
          FEve = FEve_Fo - FEve_0.6,
          FDiv = FDiv_Fo - FDiv_0.6,
-         FDis = FDis_Fo - FDis_0.6) %>% 
+         FDis = FDis_Fo - FDis_0.6) %>%
+  select(., PD:FDis) %>% 
   na.omit %>%
   mutate(pd_PD = p_direction(PD),
          pd_MPD = p_direction(MPD),
@@ -361,13 +389,43 @@ hab_diff <- PD_FD_hab_diff %>%
          pd_FRic = p_direction(FRic),
          pd_FEve = p_direction(FEve),
          pd_FDiv = p_direction(FDiv),
-         pd_FDis = p_direction(FDis)) %>% 
-  select(., 45:53) %>% 
+         pd_FDis = p_direction(FDis),
+         median_PD = median(PD),
+         CI_lo_PD = hdci(PD)[,1],
+         CI_hi_PD = hdci(PD)[,2],
+         median_MPD = median(MPD),
+         CI_lo_MPD = hdci(MPD)[,1],
+         CI_hi_MPD = hdci(MPD)[,2],
+         median_MNTD = median(MNTD),
+         CI_lo_MNTD = hdci(MNTD)[,1],
+         CI_hi_MNTD = hdci(MNTD)[,2],
+         median_ED = median(ED),
+         CI_lo_ED = hdci(ED)[,1],
+         CI_hi_ED = hdci(ED)[,2],
+         median_EDR = median(EDR),
+         CI_lo_EDR = hdci(EDR)[,1],
+         CI_hi_EDR = hdci(EDR)[,2],
+         median_FRic = median(FRic),
+         CI_lo_FRic = hdci(FRic)[,1],
+         CI_hi_FRic = hdci(FRic)[,2],
+         median_FEve = median(FEve),
+         CI_lo_FEve = hdci(FEve)[,1],
+         CI_hi_FEve = hdci(FEve)[,2],
+         median_FDiv = median(FDiv),
+         CI_lo_FDiv = hdci(FDiv)[,1],
+         CI_hi_FDiv = hdci(FDiv)[,2],
+         median_FDis = median(FDis),
+         CI_lo_FDis = hdci(FDis)[,1],
+         CI_hi_FDis = hdci(FDis)[,2]) %>%
+  select(., pd_PD:CI_hi_FDis) %>%          # change to CI_hi_FDis
   summarise_all(mean)
 
-prob_dir_habs <- bind_rows(pas_diff, hab_diff) %>% 
+
+prob_dir_habs <- bind_rows(PD_FD_pas_diff, PD_FD_hab_diff) %>% 
   mutate(diff = c("Pasture 0.6 vs 0.1", "Pasture vs Forest"))
 
+
+# Probability of direction plot
 ggplot(prob_dir_habs, aes(x = diff)) +
   geom_point(aes(y = pd_PD, color = "PD")) +
   geom_point(aes(y = pd_MPD, color = "MPD")) +
@@ -383,6 +441,52 @@ ggplot(prob_dir_habs, aes(x = diff)) +
   xlab("Habitat difference") +
   labs(color="Index") +
   scale_color_viridis(discrete = T)
+
+# medians plot
+ggplot(PD_FD_pas_diff) +
+  geom_point(aes(y = "PD", x = median_PD)) +
+  geom_errorbar(aes(y = "PD", xmin = CI_lo_PD, xmax = CI_hi_PD)) +
+  geom_point(aes(y = "MPD", x = median_MPD)) +
+  geom_errorbar(aes(y = "MPD", xmin = CI_lo_MPD, xmax = CI_hi_MPD)) +
+  geom_point(aes(y = "MNTD", x = median_MNTD)) +
+  geom_errorbar(aes(y = "MNTD", xmin = CI_lo_MNTD, xmax = CI_hi_MNTD)) +
+  geom_point(aes(y = "ED", x = median_ED)) +
+  geom_errorbar(aes(y = "ED", xmin = CI_lo_ED, xmax = CI_hi_ED)) +
+  geom_point(aes(y = "EDR", x = median_EDR)) +
+  geom_errorbar(aes(y = "EDR", xmin = CI_lo_EDR, xmax = CI_hi_EDR)) +
+  geom_point(aes(y = "FRic", x = median_FRic)) +
+  geom_errorbar(aes(y = "FRic", xmin = CI_lo_FRic, xmax = CI_hi_FRic)) +
+  geom_point(aes(y = "FEve", x = median_FEve)) +
+  geom_errorbar(aes(y = "FEve", xmin = CI_lo_FEve, xmax = CI_hi_FEve)) +
+  geom_point(aes(y = "FDiv", x = median_FDiv)) +
+  geom_errorbar(aes(y = "FDiv", xmin = CI_lo_FDiv, xmax = CI_hi_FDiv)) +
+  geom_point(aes(y = "FDis", x = median_FDis)) +
+  geom_errorbar(aes(y = "FDis", xmin = CI_lo_FDis, xmax = CI_hi_FDis)) +
+  xlab("Standardised median of difference between Pasture 0.6 and pasture 0.1")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(PD_FD_hab_diff) +
+  geom_point(aes(y = "PD", x = median_PD)) +
+  geom_errorbar(aes(y = "PD", xmin = CI_lo_PD, xmax = CI_hi_PD)) +
+  geom_point(aes(y = "MPD", x = median_MPD)) +
+  geom_errorbar(aes(y = "MPD", xmin = CI_lo_MPD, xmax = CI_hi_MPD)) +
+  geom_point(aes(y = "MNTD", x = median_MNTD)) +
+  geom_errorbar(aes(y = "MNTD", xmin = CI_lo_MNTD, xmax = CI_hi_MNTD)) +
+  geom_point(aes(y = "ED", x = median_ED)) +
+  geom_errorbar(aes(y = "ED", xmin = CI_lo_ED, xmax = CI_hi_ED)) +
+  geom_point(aes(y = "EDR", x = median_EDR)) +
+  geom_errorbar(aes(y = "EDR", xmin = CI_lo_EDR, xmax = CI_hi_EDR)) +
+  geom_point(aes(y = "FRic", x = median_FRic)) +
+  geom_errorbar(aes(y = "FRic", xmin = CI_lo_FRic, xmax = CI_hi_FRic)) +
+  geom_point(aes(y = "FEve", x = median_FEve)) +
+  geom_errorbar(aes(y = "FEve", xmin = CI_lo_FEve, xmax = CI_hi_FEve)) +
+  geom_point(aes(y = "FDiv", x = median_FDiv)) +
+  geom_errorbar(aes(y = "FDiv", xmin = CI_lo_FDiv, xmax = CI_hi_FDiv)) +
+  geom_point(aes(y = "FDis", x = median_FDis)) +
+  geom_errorbar(aes(y = "FDis", xmin = CI_lo_FDis, xmax = CI_hi_FDis)) +
+  xlab("Standardised median of difference between Forest and Pasture 0.6")+
+  geom_vline(xintercept = 0, col = "red")
+
 
 ## 5.2 Sharing/sparing
 
@@ -446,7 +550,7 @@ prob_dir_diff_high <- bind_rows(prob_dir_diff_high, .id = "n_pt") %>%
   summarise_all(., mean)
 
 
-# Plots
+# Probability of direction plots
 ggplot(prob_dir_diff_low, aes(x = as.numeric(n_pt))) + 
   geom_point(aes(y = pd_PD, color = "PD")) +
   geom_point(aes(y = pd_MPD, color = "MPD")) +
@@ -482,3 +586,206 @@ ggplot(prob_dir_diff_high, aes(x = as.numeric(n_pt))) +
   ggtitle("High Yield") +
   labs(color="Index") +
   scale_color_viridis(discrete = T)
+
+
+
+# Medians
+# medians along increasing unit
+n_pts <- unique(PD_FD_metrics_diff$n_pt)
+medians_diff_low <- c()
+for (n in n_pts) {
+  medians_diff_low[[n]] <- PD_FD_metrics_diff %>%
+    na.omit() %>% 
+    filter(., n_pt == n, Yield == "Low") %>%
+    select(PD:sesFDis) %>% 
+    mutate(median_PD = median(PD),
+           CI_lo_PD = hdci(PD)[,1],
+           CI_hi_PD = hdci(PD)[,2],
+           median_MPD = median(MPD),
+           CI_lo_MPD = hdci(MPD)[,1],
+           CI_hi_MPD = hdci(MPD)[,2],
+           median_MNTD = median(MNTD),
+           CI_lo_MNTD = hdci(MNTD)[,1],
+           CI_hi_MNTD = hdci(MNTD)[,2],
+           median_ED = median(ED),
+           CI_lo_ED = hdci(ED)[,1],
+           CI_hi_ED = hdci(ED)[,2],
+           median_EDR = median(EDR),
+           CI_lo_EDR = hdci(EDR)[,1],
+           CI_hi_EDR = hdci(EDR)[,2],
+           median_FRic = median(FRic),
+           CI_lo_FRic = hdci(FRic)[,1],
+           CI_hi_FRic = hdci(FRic)[,2],
+           median_FEve = median(FEve),
+           CI_lo_FEve = hdci(FEve)[,1],
+           CI_hi_FEve = hdci(FEve)[,2],
+           median_FDiv = median(FDiv),
+           CI_lo_FDiv = hdci(FDiv)[,1],
+           CI_hi_FDiv = hdci(FDiv)[,2],
+           median_FDis = median(FDis),
+           CI_lo_FDis = hdci(FDis)[,1],
+           CI_hi_FDis = hdci(FDis)[,2]) %>% 
+    select(., median_PD:CI_hi_FDis) %>% 
+    mutate_all(., as.numeric)
+}
+medians_diff_low <- bind_rows(medians_diff_low, .id = "n_pt") %>% 
+  group_by(., n_pt) %>% 
+  summarise_all(., mean) %>% 
+  mutate(., n_pt = factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")))
+
+#high
+n_pts <- unique(PD_FD_metrics_diff$n_pt)
+medians_diff_high <- c()
+for (n in n_pts) {
+  medians_diff_high[[n]] <- PD_FD_metrics_diff %>%
+    na.omit() %>% 
+    filter(., n_pt == n, Yield == "High") %>%
+    select(PD:sesFDis) %>% 
+    mutate(median_PD = median(PD),
+           CI_lo_PD = hdci(PD)[,1],
+           CI_hi_PD = hdci(PD)[,2],
+           median_MPD = median(MPD),
+           CI_lo_MPD = hdci(MPD)[,1],
+           CI_hi_MPD = hdci(MPD)[,2],
+           median_MNTD = median(MNTD),
+           CI_lo_MNTD = hdci(MNTD)[,1],
+           CI_hi_MNTD = hdci(MNTD)[,2],
+           median_ED = median(ED),
+           CI_lo_ED = hdci(ED)[,1],
+           CI_hi_ED = hdci(ED)[,2],
+           median_EDR = median(EDR),
+           CI_lo_EDR = hdci(EDR)[,1],
+           CI_hi_EDR = hdci(EDR)[,2],
+           median_FRic = median(FRic),
+           CI_lo_FRic = hdci(FRic)[,1],
+           CI_hi_FRic = hdci(FRic)[,2],
+           median_FEve = median(FEve),
+           CI_lo_FEve = hdci(FEve)[,1],
+           CI_hi_FEve = hdci(FEve)[,2],
+           median_FDiv = median(FDiv),
+           CI_lo_FDiv = hdci(FDiv)[,1],
+           CI_hi_FDiv = hdci(FDiv)[,2],
+           median_FDis = median(FDis),
+           CI_lo_FDis = hdci(FDis)[,1],
+           CI_hi_FDis = hdci(FDis)[,2]) %>% 
+    select(., median_PD:CI_hi_FDis) %>% 
+    mutate_all(., as.numeric)
+}
+medians_diff_high <- bind_rows(medians_diff_high, .id = "n_pt") %>% 
+  group_by(., n_pt) %>% 
+  summarise_all(., mean) %>% 
+  mutate(., n_pt = factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")))
+
+
+
+# Medians plot
+# Low
+ggplot(medians_diff_low) +
+  geom_point(aes(y = "PD", x = median_PD)) +
+  geom_errorbar(aes(y = "PD", xmin = CI_lo_PD, xmax = CI_hi_PD)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("Low")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_low) +
+  geom_point(aes(y = "MPD", x = median_MPD)) +
+  geom_errorbar(aes(y = "MPD", xmin = CI_lo_MPD, xmax = CI_hi_MPD)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("Low")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_low) +
+  geom_point(aes(y = "MNTD", x = median_MNTD)) +
+  geom_errorbar(aes(y = "MNTD", xmin = CI_lo_MNTD, xmax = CI_hi_MNTD)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("Low")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_low) +
+  geom_point(aes(y = "ED", x = median_ED)) +
+  geom_errorbar(aes(y = "ED", xmin = CI_lo_ED, xmax = CI_hi_ED)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("Low")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_low) +
+  geom_point(aes(y = "EDR", x = median_EDR)) +
+  geom_errorbar(aes(y = "EDR", xmin = CI_lo_EDR, xmax = CI_hi_EDR)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("Low")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_low) +
+  geom_point(aes(y = "FRic", x = median_FRic)) +
+  geom_errorbar(aes(y = "FRic", xmin = CI_lo_FRic, xmax = CI_hi_FRic)) +
+  geom_point(aes(y = "FEve", x = median_FEve)) +
+  geom_errorbar(aes(y = "FEve", xmin = CI_lo_FEve, xmax = CI_hi_FEve)) +
+  geom_point(aes(y = "FDiv", x = median_FDiv)) +
+  geom_errorbar(aes(y = "FDiv", xmin = CI_lo_FDiv, xmax = CI_hi_FDiv)) +
+  geom_point(aes(y = "FDis", x = median_FDis)) +
+  geom_errorbar(aes(y = "FDis", xmin = CI_lo_FDis, xmax = CI_hi_FDis)) + 
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("Low")+
+  geom_vline(xintercept = 0, col = "red")
+
+
+# High
+ggplot(medians_diff_high) +
+  geom_point(aes(y = "PD", x = median_PD)) +
+  geom_errorbar(aes(y = "PD", xmin = CI_lo_PD, xmax = CI_hi_PD)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("High")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_high) +
+  geom_point(aes(y = "MPD", x = median_MPD)) +
+  geom_errorbar(aes(y = "MPD", xmin = CI_lo_MPD, xmax = CI_hi_MPD)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("High")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_high) +
+  geom_point(aes(y = "MNTD", x = median_MNTD)) +
+  geom_errorbar(aes(y = "MNTD", xmin = CI_lo_MNTD, xmax = CI_hi_MNTD)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("High")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_high) +
+  geom_point(aes(y = "ED", x = median_ED)) +
+  geom_errorbar(aes(y = "ED", xmin = CI_lo_ED, xmax = CI_hi_ED)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("High")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_high) +
+  geom_point(aes(y = "EDR", x = median_EDR)) +
+  geom_errorbar(aes(y = "EDR", xmin = CI_lo_EDR, xmax = CI_hi_EDR)) +
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("High")+
+  geom_vline(xintercept = 0, col = "red")
+
+ggplot(medians_diff_high) +
+  geom_point(aes(y = "FRic", x = median_FRic)) +
+  geom_errorbar(aes(y = "FRic", xmin = CI_lo_FRic, xmax = CI_hi_FRic)) +
+  geom_point(aes(y = "FEve", x = median_FEve)) +
+  geom_errorbar(aes(y = "FEve", xmin = CI_lo_FEve, xmax = CI_hi_FEve)) +
+  geom_point(aes(y = "FDiv", x = median_FDiv)) +
+  geom_errorbar(aes(y = "FDiv", xmin = CI_lo_FDiv, xmax = CI_hi_FDiv)) +
+  geom_point(aes(y = "FDis", x = median_FDis)) +
+  geom_errorbar(aes(y = "FDis", xmin = CI_lo_FDis, xmax = CI_hi_FDis)) + 
+  facet_wrap(~n_pt) +
+  xlab("Median of difference Sparing - sharing") +
+  ggtitle("High")+
+  geom_vline(xintercept = 0, col = "red")
