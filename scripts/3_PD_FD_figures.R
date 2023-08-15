@@ -603,8 +603,6 @@ ggplot(prob_dir_diff_high, aes(x = as.numeric(n_pt))) +
   labs(color="Index") +
   scale_color_viridis(discrete = T)
 
-
-
 # Medians
 # medians along increasing unit
 n_pts <- unique(PD_FD_metrics_diff$n_pt)
