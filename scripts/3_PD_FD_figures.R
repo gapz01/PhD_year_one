@@ -299,15 +299,30 @@ ggsave(filename = "Fig_SOM.png",
 
 
 # 5. Additional Results ####
-## Computing probability of direction
-## 
-## 5.1 Habitats ####
-## Differences between forest and pasture-60%
-## Pasture-60% and pasture-10%
 
+## 5.1 Mean PD and FD ####
+
+PD_FD_habitats %>% 
+  na.omit() %>% 
+  group_by(., habitat) %>% 
+  summarise_all(., median) %>%
+  view()
+
+PD_FD_metrics %>% 
+  na.omit() %>% 
+  group_by(., n_pt, Yield, Management) %>% 
+  summarise_all(., median) %>%
+  view()
+
+
+
+## 5.2 Probability of direction ####
+## Differences between forest and pasture
 PD_FD_60 <- filter(PD_FD_habitats, habitat == "pasture_0.6")
 PD_FD_10 <- filter(PD_FD_habitats, habitat == "pasture_0.1")
 PD_FD_Fo <- filter(PD_FD_habitats, habitat == "forest")
+
+## Difference between pasture-60% and pasture-10%
 
 PD_FD_pas_diff <- left_join(PD_FD_60,
                             PD_FD_10, 
@@ -361,9 +376,10 @@ PD_FD_pas_diff <- left_join(PD_FD_60,
          median_FDis = median(FDis),
          CI_lo_FDis = hdci(FDis)[,1],
          CI_hi_FDis = hdci(FDis)[,2]) %>%
-  select(., pd_PD:CI_hi_FDis) %>%              # change to CI_hi_FDis
+  select(., pd_PD:CI_hi_FDis) %>%
 summarise_all(mean)
 
+## Difference between forest and pasture-60%
 
 PD_FD_hab_diff <- left_join(PD_FD_Fo,
                             PD_FD_60, 
@@ -391,7 +407,7 @@ PD_FD_hab_diff <- left_join(PD_FD_Fo,
          pd_FDiv = p_direction(FDiv),
          pd_FDis = p_direction(FDis),
          median_PD = median(PD),
-         CI_lo_PD = hdci(PD)[,1],
+         CI_lo_PD = hdci(PD, .width=.95)[,1],  # width is the % confidence interval
          CI_hi_PD = hdci(PD)[,2],
          median_MPD = median(MPD),
          CI_lo_MPD = hdci(MPD)[,1],
@@ -417,12 +433,12 @@ PD_FD_hab_diff <- left_join(PD_FD_Fo,
          median_FDis = median(FDis),
          CI_lo_FDis = hdci(FDis)[,1],
          CI_hi_FDis = hdci(FDis)[,2]) %>%
-  select(., pd_PD:CI_hi_FDis) %>%          # change to CI_hi_FDis
+  select(., pd_PD:CI_hi_FDis) %>%
   summarise_all(mean)
 
-
+# Probability of direction results
 prob_dir_habs <- bind_rows(PD_FD_pas_diff, PD_FD_hab_diff) %>% 
-  mutate(diff = c("Pasture 0.6 vs 0.1", "Pasture vs Forest"))
+  mutate(diff = c("Pasture_0.6 vs 0.1", "Forest vs Pasture_0.6"), .before = 1)
 
 
 # Probability of direction plot
@@ -462,7 +478,7 @@ ggplot(PD_FD_pas_diff) +
   geom_errorbar(aes(y = "FDiv", xmin = CI_lo_FDiv, xmax = CI_hi_FDiv)) +
   geom_point(aes(y = "FDis", x = median_FDis)) +
   geom_errorbar(aes(y = "FDis", xmin = CI_lo_FDis, xmax = CI_hi_FDis)) +
-  xlab("Standardised median of difference between Pasture 0.6 and pasture 0.1")+
+  xlab("Median of difference between Pasture 0.6 and pasture 0.1")+
   geom_vline(xintercept = 0, col = "red")
 
 ggplot(PD_FD_hab_diff) +
@@ -484,7 +500,7 @@ ggplot(PD_FD_hab_diff) +
   geom_errorbar(aes(y = "FDiv", xmin = CI_lo_FDiv, xmax = CI_hi_FDiv)) +
   geom_point(aes(y = "FDis", x = median_FDis)) +
   geom_errorbar(aes(y = "FDis", xmin = CI_lo_FDis, xmax = CI_hi_FDis)) +
-  xlab("Standardised median of difference between Forest and Pasture 0.6")+
+  xlab("Median of difference between Forest and Pasture 0.6")+
   geom_vline(xintercept = 0, col = "red")
 
 
