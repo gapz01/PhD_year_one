@@ -619,6 +619,40 @@ ggplot(contrast_pastures) +
   theme_test()
 
 
+# Ses metrics ####
+
+PD_FD_F %>% na.omit() %>% 
+  select(., starts_with("ses")) %>%
+  mutate(., ZeroPD = sesPD >= -1.96 & sesPD <= 1.96,
+         ZeroMPD = sesMPD >= -1.96 & sesMPD <= 1.96,
+         ZeroMNTD = sesMNTD >= -1.96 & sesMNTD <= 1.96,
+         ZeroFRic = sesFRic >= -1.96 & sesFRic <= 1.96,
+         ZeroFEve = sesFEve >= -1.96 & sesFEve <= 1.96,
+         ZeroFDiv = sesFDiv >= -1.96 & sesFDiv <= 1.96,
+         ZeroFDis = sesFDis >= -1.96 & sesFDis <= 1.96) %>%
+  select(., starts_with("Z")) %>% 
+  summarise_all(., sum) %>% 
+  mutate_all(., function(x) {(x/1000)*100}) %>%  view()
+
+
+PD_FD_0 %>%
+  select(., starts_with("ses")) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+  geom_density() +
+  #geom_vline(xintercept = c(-1.96, 1.96)) +
+  ggtitle("Pasture 0%") +
+  facet_wrap(~ key, scales = "free") 
+
+
+
+
+
+
+
+
+
+
 
 ## 5.2 Differences between sharing/sparing ####
 
