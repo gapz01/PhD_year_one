@@ -798,6 +798,7 @@ ggplot(prob_dir_sharing_sparing, aes(x = n_pt)) +
   ggtitle("Low Yield") +
   labs(color="Index") +
   scale_color_viridis(discrete = T)
+<<<<<<< HEAD
 # # High
 # ggplot(prob_dir_diff_high, aes(x = n_pt)) + 
 #   geom_point(aes(y = PD_pd, color = "PD")) +
@@ -816,6 +817,115 @@ ggplot(prob_dir_sharing_sparing, aes(x = n_pt)) +
 #   ggtitle("High Yield") +
 #   labs(color="Index") +
 #   scale_color_viridis(discrete = T)
+=======
+
+# Plots
+ggplot(prob_dir_diff_high, aes(x = as.numeric(n_pt))) + 
+  geom_point(aes(y = pd_PD, color = "PD")) +
+  geom_point(aes(y = pd_MPD, color = "MPD")) +
+  geom_point(aes(y = pd_MNTD, color = "MNTD")) +
+  geom_point(aes(y = pd_ED, color = "ED")) +
+  geom_point(aes(y = pd_EDR, color = "EDR")) +
+  geom_point(aes(y = pd_FRic, color = "FRic")) +
+  geom_point(aes(y = pd_FEve, color = "FEve")) +
+  geom_point(aes(y = pd_FDiv, color = "FDiv")) +
+  geom_point(aes(y = pd_FDis, color = "FDis")) +
+  geom_hline(yintercept = 0.975) +
+  #ylim(0.95,1) +
+  ylab("Probability of direction") +
+  xlab("Number of management units") +
+  ggtitle("High Yield") +
+  labs(color="Index") +
+  scale_color_viridis(discrete = T)
+
+# Medians
+# medians along increasing unit
+n_pts <- unique(PD_FD_metrics_diff$n_pt)
+medians_diff_low <- c()
+for (n in n_pts) {
+  medians_diff_low[[n]] <- PD_FD_metrics_diff %>%
+    na.omit() %>% 
+    filter(., n_pt == n, Yield == "Low") %>%
+    select(PD:sesFDis) %>% 
+    mutate(median_PD = median(PD),
+           CI_lo_PD = hdci(PD)[,1],
+           CI_hi_PD = hdci(PD)[,2],
+           median_MPD = median(MPD),
+           CI_lo_MPD = hdci(MPD)[,1],
+           CI_hi_MPD = hdci(MPD)[,2],
+           median_MNTD = median(MNTD),
+           CI_lo_MNTD = hdci(MNTD)[,1],
+           CI_hi_MNTD = hdci(MNTD)[,2],
+           median_ED = median(ED),
+           CI_lo_ED = hdci(ED)[,1],
+           CI_hi_ED = hdci(ED)[,2],
+           median_EDR = median(EDR),
+           CI_lo_EDR = hdci(EDR)[,1],
+           CI_hi_EDR = hdci(EDR)[,2],
+           median_FRic = median(FRic),
+           CI_lo_FRic = hdci(FRic)[,1],
+           CI_hi_FRic = hdci(FRic)[,2],
+           median_FEve = median(FEve),
+           CI_lo_FEve = hdci(FEve)[,1],
+           CI_hi_FEve = hdci(FEve)[,2],
+           median_FDiv = median(FDiv),
+           CI_lo_FDiv = hdci(FDiv)[,1],
+           CI_hi_FDiv = hdci(FDiv)[,2],
+           median_FDis = median(FDis),
+           CI_lo_FDis = hdci(FDis)[,1],
+           CI_hi_FDis = hdci(FDis)[,2]) %>% 
+    select(., median_PD:CI_hi_FDis) %>% 
+    mutate_all(., as.numeric)
+}
+medians_diff_low <- bind_rows(medians_diff_low, .id = "n_pt") %>% 
+  group_by(., n_pt) %>% 
+  summarise_all(., mean) %>% 
+  mutate(., n_pt = factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")))
+
+#high
+n_pts <- unique(PD_FD_metrics_diff$n_pt)
+medians_diff_high <- c()
+for (n in n_pts) {
+  medians_diff_high[[n]] <- PD_FD_metrics_diff %>%
+    na.omit() %>% 
+    filter(., n_pt == n, Yield == "High") %>%
+    select(PD:sesFDis) %>% 
+    mutate(median_PD = median(PD),
+           CI_lo_PD = hdci(PD)[,1],
+           CI_hi_PD = hdci(PD)[,2],
+           median_MPD = median(MPD),
+           CI_lo_MPD = hdci(MPD)[,1],
+           CI_hi_MPD = hdci(MPD)[,2],
+           median_MNTD = median(MNTD),
+           CI_lo_MNTD = hdci(MNTD)[,1],
+           CI_hi_MNTD = hdci(MNTD)[,2],
+           median_ED = median(ED),
+           CI_lo_ED = hdci(ED)[,1],
+           CI_hi_ED = hdci(ED)[,2],
+           median_EDR = median(EDR),
+           CI_lo_EDR = hdci(EDR)[,1],
+           CI_hi_EDR = hdci(EDR)[,2],
+           median_FRic = median(FRic),
+           CI_lo_FRic = hdci(FRic)[,1],
+           CI_hi_FRic = hdci(FRic)[,2],
+           median_FEve = median(FEve),
+           CI_lo_FEve = hdci(FEve)[,1],
+           CI_hi_FEve = hdci(FEve)[,2],
+           median_FDiv = median(FDiv),
+           CI_lo_FDiv = hdci(FDiv)[,1],
+           CI_hi_FDiv = hdci(FDiv)[,2],
+           median_FDis = median(FDis),
+           CI_lo_FDis = hdci(FDis)[,1],
+           CI_hi_FDis = hdci(FDis)[,2]) %>% 
+    select(., median_PD:CI_hi_FDis) %>% 
+    mutate_all(., as.numeric)
+}
+medians_diff_high <- bind_rows(medians_diff_high, .id = "n_pt") %>% 
+  group_by(., n_pt) %>% 
+  summarise_all(., mean) %>% 
+  mutate(., n_pt = factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")))
+
+>>>>>>> 3d78f1c997d74f74786673a89b657c1184134900
 
 
 # Medians plot
