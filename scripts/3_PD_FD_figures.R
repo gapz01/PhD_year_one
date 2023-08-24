@@ -43,7 +43,8 @@ PD_FD_to_plot <- PD_FD_habitats %>%
 P_func_hab <- function(x){
   ggplot(PD_FD_to_plot, aes(x = habitat, y = {{x}}, fill = habitat)) +
     geom_violin(alpha = 0.5, color = "transparent") +
-    stat_summary (fun.data = mean_sd, 
+    stat_summary (fun.data = median_hdci,
+                  fun.args = c(.width = 0.9),
                   geom = "pointrange",
                   size = 0.1,
                   position = position_dodge(width = 1),
@@ -54,7 +55,7 @@ P_func_hab <- function(x){
                      expand = c(0.125,0,0,0)) +
     geom_hline(yintercept = 0, size = 0.1) +
     xlab(NULL) +
-    geom_vline(xintercept = 2, linetype = "dashed", size = 0.5, color = "grey50") +
+    geom_vline(xintercept = 2, linetype = "dashed", linewidth = 0.5, color = "grey50") +
     theme_linedraw() +
     theme(panel.grid = element_blank(),
           axis.text = element_text(size = 11),   # axis values size
@@ -116,7 +117,8 @@ P_func_farm <- function(x){
     geom_rect(aes(xmin=1.5,xmax=2.5,ymin=-Inf,ymax=Inf), fill="gray95") +
     geom_violin(position = position_dodge(width = 1), alpha = 0.5, scale = "width", color = "transparent") +
     scale_fill_manual(values = c("#5D3A9B", "#E66100")) +
-    stat_summary (fun.data = mean_sd, 
+    stat_summary (fun.data = median_hdci,
+                  fun.args = c(.width = 0.9),
                   geom = "pointrange",
                   size = 0.1,
                   position = position_dodge(width = 1),
@@ -208,7 +210,8 @@ P_func_diff <- function(x){
     geom_violin(position = position_dodge(width = 1), alpha = 0.5, scale = "width", size = 0.1, color = "transparent") +
     #scale_colour_manual(values = c("transparent", "grey40")) +
     scale_fill_manual(values = c("grey0", "grey70")) +
-    stat_summary (fun.data = mean_sd, 
+    stat_summary (fun.data = median_hdci,
+                  fun.args = c(.width = 0.9),
                   geom = "pointrange",
                   size = 0.001,
                   position = position_dodge(width = 1),
@@ -298,7 +301,7 @@ ggsave(filename = "Fig_SOM.png",
 
 
 
-# 5. Additional Results ####
+# 5. ADDITIONAL RESULTS ####
 # To better show results, compute contrasts, p_direction, median and CI
 
 ## 5.1 Differences between habitats ####
@@ -314,12 +317,11 @@ PD_FD_0  <- filter(PD_FD_habitats, habitat == "pasture_0")
 PD_FD_F  <- filter(PD_FD_habitats, habitat == "forest")
 
 
-# --- Forest vs WF pastures --- 
-# (manually, couldn't do it in a loop)
-
-contrast_F_60 <- 
+# Compute the difference between forest and pasture along WF gradient
+# couldn't do this in a loop, did it manually (TO UPDATE)
+contrast_F_0 <- 
   left_join(PD_FD_F,
-            PD_FD_60, 
+            PD_FD_0, 
             by = c("iter_id"),
             suffix = c("_F", "_P")) %>%
   select(., -c(habitat_F, habitat_P)) %>%
@@ -380,30 +382,88 @@ contrast_F_60 <-
          FDis_pd = p_direction(FDis_perc_diff)) %>% 
   select(., PD_median_diff:FDis_pd) %>%
   summarise_all(unique) %>% 
-  mutate(., contrast = "Forest vs Pasture 60%", .before = 1)
+  mutate(., contrast = "0%", .before = 1)
 
 # Bind in a dataframe
 contrast_habitats <- bind_rows(contrast_F_60, contrast_F_50, contrast_F_40,
                                 contrast_F_30, contrast_F_20, contrast_F_10, contrast_F_0) %>% 
-   mutate(., contrast = factor(contrast, levels = c("Forest vs Pasture 60%",
-                                                     "Forest vs Pasture 50%",
-                                                     "Forest vs Pasture 40%",
-                                                     "Forest vs Pasture 30%",
-                                                     "Forest vs Pasture 20%",
-                                                     "Forest vs Pasture 10%",
-                                                     "Forest vs Pasture 0%")))
+   mutate(., contrast = factor(contrast, levels = c("60%",
+                                                     "50%",
+                                                     "40%",
+                                                     "30%",
+                                                     "20%",
+                                                     "10%",
+                                                     "0%")))
+# format to easier plotting
+contrast_habitats <- contrast_habitats %>% 
+  select(., contrast, starts_with("PD")) %>% 
+  rename(., median = PD_median_diff, 
+         CI_low = PD_median_diff_lo, 
+         CI_high = PD_median_diff_hi, 
+         pd = PD_pd) %>%
+  mutate(.,index = "PD") %>% 
+  bind_rows(., 
+            select(contrast_habitats, contrast, starts_with("MPD")) %>% 
+              rename(., median = MPD_median_diff, 
+                     CI_low = MPD_median_diff_lo, 
+                     CI_high = MPD_median_diff_hi, 
+                     pd = MPD_pd) %>% 
+              mutate(.,index = "MPD")) %>% 
+  bind_rows(., 
+            select(contrast_habitats, contrast, starts_with("MNTD")) %>% 
+              rename(., median = MNTD_median_diff, 
+                     CI_low = MNTD_median_diff_lo, 
+                     CI_high = MNTD_median_diff_hi, 
+                     pd = MNTD_pd) %>% 
+              mutate(.,index = "MNTD")) %>%
+  bind_rows(., 
+            select(contrast_habitats, contrast, starts_with("ED_")) %>% 
+              rename(., median = ED_median_diff, 
+                     CI_low = ED_median_diff_lo, 
+                     CI_high = ED_median_diff_hi, 
+                     pd = ED_pd) %>% 
+              mutate(.,index = "ED")) %>%
+  bind_rows(., 
+            select(contrast_habitats, contrast, starts_with("EDR")) %>% 
+              rename(., median = EDR_median_diff, 
+                     CI_low = EDR_median_diff_lo, 
+                     CI_high = EDR_median_diff_hi, 
+                     pd = EDR_pd) %>% 
+              mutate(.,index = "EDR")) %>%
+  bind_rows(., 
+            select(contrast_habitats, contrast, starts_with("FRic")) %>% 
+              rename(., median = FRic_median_diff, 
+                     CI_low = FRic_median_diff_lo, 
+                     CI_high = FRic_median_diff_hi, 
+                     pd = FRic_pd) %>% 
+              mutate(.,index = "FRic")) %>% 
+  bind_rows(., 
+            select(contrast_habitats, contrast, starts_with("FEve")) %>% 
+              rename(., median = FEve_median_diff, 
+                     CI_low = FEve_median_diff_lo, 
+                     CI_high = FEve_median_diff_hi, 
+                     pd = FEve_pd) %>% 
+              mutate(.,index = "FEve")) %>%
+  bind_rows(., 
+            select(contrast_habitats, contrast, starts_with("FDiv")) %>% 
+              rename(., median = FDiv_median_diff, 
+                     CI_low = FDiv_median_diff_lo, 
+                     CI_high = FDiv_median_diff_hi, 
+                     pd = FDiv_pd) %>% 
+              mutate(.,index = "FDiv")) %>%
+  bind_rows(., 
+            select(contrast_habitats, contrast, starts_with("FDis")) %>% 
+              rename(., median = FDis_median_diff, 
+                     CI_low = FDis_median_diff_lo, 
+                     CI_high = FDis_median_diff_hi, 
+                     pd = FDis_pd) %>% 
+              mutate(.,index = "FDis"))
+
+## 5.1.1 Plots for habitats ####
 
 # Probability of direction plot
 ggplot(contrast_habitats, aes(x = contrast)) +
-  geom_point(aes(y = PD_pd, color = "PD")) +
-  geom_point(aes(y = MPD_pd, color = "MPD")) +
-  geom_point(aes(y = MNTD_pd, color = "MNTD")) +
-  geom_point(aes(y = ED_pd, color = "ED")) +
-  geom_point(aes(y = EDR_pd, color = "EDR")) +
-  geom_point(aes(y = FRic_pd, color = "FRic")) +
-  geom_point(aes(y = FEve_pd, color = "FEve")) +
-  geom_point(aes(y = FDis_pd, color = "FDiv")) +
-  geom_point(aes(y = FDiv_pd, color = "FDis")) +  
+  geom_point(aes(y = pd, color = index))+  
   geom_hline(yintercept = 0.975) +
   ylab("Probability of direction") +
   xlab("Habitat difference") +
@@ -411,215 +471,36 @@ ggplot(contrast_habitats, aes(x = contrast)) +
   ggtitle("Habitat") +
   scale_color_viridis(discrete = T)
 
-# medians plot
-ggplot(contrast_habitats) +
-  geom_pointrange(aes(y = "PD",
-                      x = PD_median_diff,
-                      xmin = PD_median_diff_lo,
-                      xmax = PD_median_diff_hi)) +
-  geom_text(aes(x = (PD_median_diff_hi+20), y = "PD",label = round(PD_pd,2)), size = 4) +
-  geom_pointrange(aes(y = "MPD",
-                      x = MPD_median_diff,
-                      xmin = MPD_median_diff_lo,
-                      xmax = MPD_median_diff_hi)) +
-  geom_text(aes(x = (MPD_median_diff_hi+20), y = "MPD",label = round(MPD_pd,2)), size = 4) +
-  geom_pointrange(aes(y = "MNTD",
-                      x = MNTD_median_diff,
-                      xmin = MNTD_median_diff_lo,
-                      xmax = MNTD_median_diff_hi)) +
-  geom_text(aes(x = (MNTD_median_diff_hi+20), y = "MNTD",label = round(MNTD_pd,2)), size = 4) +
-  geom_pointrange(aes(y = "ED",
-                      x = ED_median_diff,
-                      xmin = ED_median_diff_lo,
-                      xmax = ED_median_diff_hi)) +
-  geom_text(aes(x = (ED_median_diff_hi+20), y = "ED",label = round(ED_pd,2)), size = 4) +
-  geom_pointrange(aes(y = "EDR",
-                      x = EDR_median_diff,
-                      xmin = EDR_median_diff_lo,
-                      xmax = EDR_median_diff_hi)) +
-  geom_text(aes(x = (EDR_median_diff_hi+20), y = "EDR",label = round(EDR_pd,2)), size = 4) +
-  geom_pointrange(aes(y = "FRic",
-                      x = FRic_median_diff,
-                      xmin = FRic_median_diff_lo,
-                      xmax = FRic_median_diff_hi)) +
-  geom_text(aes(x = (FRic_median_diff_hi+20), y = "FRic",label = round(FRic_pd,2)), size = 4) +
-  geom_pointrange(aes(y = "FEve",
-                      x = FEve_median_diff,
-                      xmin = FEve_median_diff_lo,
-                      xmax = FEve_median_diff_hi)) +
-  geom_text(aes(x = (FEve_median_diff_hi+20), y = "FEve",label = round(FEve_pd,2)), size = 4) +
-  geom_pointrange(aes(y = "FDiv",
-                      x = FDiv_median_diff,
-                      xmin = FDiv_median_diff_lo,
-                      xmax = FDiv_median_diff_hi)) +
-  geom_text(aes(x = (FDiv_median_diff_hi+20), y = "FDiv",label = round(FDiv_pd,2)), size = 4) +
-  geom_pointrange(aes(y = "FDis",
-                      x = FDis_median_diff,
-                      xmin = FDis_median_diff_lo,
-                      xmax = FDis_median_diff_hi)) +
-  geom_text(aes(x = (FDis_median_diff_hi+20), y = "FDis",label = round(FDis_pd,2)), size = 4) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "grey")+
-  labs(color = "Metrics") +
-  ylab("Metrics") +
-  xlab("Median difference and 90% CI") +
-  facet_grid(~contrast) +
-  theme_test(base_size = 14)
 
+# Medians and CI plot (annotated with p_direction)
+P_func_hab_medians <- function(x){
+contrast_habitats %>% filter(., index == x) %>% 
+ggplot(.) +
+  geom_pointrange(aes(x = contrast,
+                      y = median,
+                      ymin = CI_low,
+                      ymax = CI_high)) +
+  geom_text(aes(y = CI_high + (CI_high*0.1), 
+                x = contrast,
+                label = round(pd,2)), size = 4) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  xlab(NULL) +
+  ylab(x) +
+  theme_test(base_size = 14)}
+
+P_func_hab_medians("PD")
+
+indices <- unique(contrast_habitats$index)
+plot_medians_hab <- c()
+for (i in indices) {
+  plot_medians_hab[[i]] <-  P_func_hab_medians(i)
+}
+
+ggarrange(plotlist =  plot_medians_hab,
+          labels = "AUTO")
 
   
-# --- Contrasts within pastures ---
-# Again manually, couldn't make a loop work
-
-contrast_P60_50 <- 
-  left_join(PD_FD_60,
-            PD_FD_50, 
-            by = c("iter_id"),
-            suffix = c("_60", "_50")) %>%
-  select(., -c(habitat_60, habitat_50)) %>%
-  na.omit %>%
-  mutate(., PD = PD_60 - PD_50,
-         MPD = MPD_60 - MPD_50,
-         MNTD = MNTD_60 - MNTD_50,
-         ED = ED_60 - ED_50,
-         EDR = EDR_60 - EDR_50,
-         FRic = FRic_60 - FRic_50,
-         FEve = FEve_60 - FEve_50,
-         FDiv = FDiv_60 - FDiv_50,
-         FDis = FDis_60 - FDis_50) %>%
-  mutate(., PD_perc_diff = (PD/((PD_60 + PD_50)/2))*100,
-         MPD_perc_diff = (MPD/((MPD_60 + MPD_50)/2))*100,
-         MNTD_perc_diff = (MNTD/((MNTD_60 + MNTD_50)/2))*100,
-         ED_perc_diff = (ED/((ED_60 + ED_50)/2))*100,
-         EDR_perc_diff = (EDR/((EDR_60 + EDR_50)/2))*100,
-         FRic_perc_diff = (FRic/((FRic_60 + FRic_50)/2))*100,
-         FEve_perc_diff = (FEve/((FEve_60 + FEve_50)/2))*100,
-         FDiv_perc_diff = (FDiv/((FDiv_60 + FDiv_50)/2))*100,
-         FDis_perc_diff = (FDis/((FDis_60 + FDis_50)/2))*100) %>%
-  mutate(., PD_median_diff = median_hdci(PD_perc_diff, .width = 0.9)[["y"]],
-         PD_median_diff_lo = median_hdci(PD_perc_diff, .width = 0.9)[["ymin"]],
-         PD_median_diff_hi = median_hdci(PD_perc_diff, .width = 0.9)[["ymax"]],
-         PD_pd = p_direction(PD_perc_diff),
-         MPD_median_diff = median_hdci(MPD_perc_diff, .width = 0.9)[["y"]],
-         MPD_median_diff_lo = median_hdci(MPD_perc_diff, .width = 0.9)[["ymin"]],
-         MPD_median_diff_hi = median_hdci(MPD_perc_diff, .width = 0.9)[["ymax"]],
-         MPD_pd = p_direction(MPD_perc_diff),
-         MNTD_median_diff = median_hdci(MNTD_perc_diff, .width = 0.9)[["y"]],
-         MNTD_median_diff_lo = median_hdci(MNTD_perc_diff, .width = 0.9)[["ymin"]],
-         MNTD_median_diff_hi = median_hdci(MNTD_perc_diff, .width = 0.9)[["ymax"]],
-         MNTD_pd = p_direction(MNTD_perc_diff),
-         ED_median_diff = median_hdci(ED_perc_diff, .width = 0.9)[["y"]],
-         ED_median_diff_lo = median_hdci(ED_perc_diff, .width = 0.9)[["ymin"]],
-         ED_median_diff_hi = median_hdci(ED_perc_diff, .width = 0.9)[["ymax"]],
-         ED_pd = p_direction(ED_perc_diff),
-         EDR_median_diff = median_hdci(EDR_perc_diff, .width = 0.9)[["y"]],
-         EDR_median_diff_lo = median_hdci(EDR_perc_diff, .width = 0.9)[["ymin"]],
-         EDR_median_diff_hi = median_hdci(EDR_perc_diff, .width = 0.9)[["ymax"]],
-         EDR_pd = p_direction(EDR_perc_diff),
-         FRic_median_diff = median_hdci(FRic_perc_diff, .width = 0.9)[["y"]],
-         FRic_median_diff_lo = median_hdci(FRic_perc_diff, .width = 0.9)[["ymin"]],
-         FRic_median_diff_hi = median_hdci(FRic_perc_diff, .width = 0.9)[["ymax"]],
-         FRic_pd = p_direction(FRic_perc_diff),
-         FEve_median_diff = median_hdci(FEve_perc_diff, .width = 0.9)[["y"]],
-         FEve_median_diff_lo = median_hdci(FEve_perc_diff, .width = 0.9)[["ymin"]],
-         FEve_median_diff_hi = median_hdci(FEve_perc_diff, .width = 0.9)[["ymax"]],
-         FEve_pd = p_direction(FEve_perc_diff),
-         FDiv_median_diff = median_hdci(FDiv_perc_diff, .width = 0.9)[["y"]],
-         FDiv_median_diff_lo = median_hdci(FDiv_perc_diff, .width = 0.9)[["ymin"]],
-         FDiv_median_diff_hi = median_hdci(FDiv_perc_diff, .width = 0.9)[["ymax"]],
-         FDiv_pd = p_direction(FDiv_perc_diff),
-         FDis_median_diff = median_hdci(FDis_perc_diff, .width = 0.9)[["y"]],
-         FDis_median_diff_lo = median_hdci(FDis_perc_diff, .width = 0.9)[["ymin"]],
-         FDis_median_diff_hi = median_hdci(FDis_perc_diff, .width = 0.9)[["ymax"]],
-         FDis_pd = p_direction(FDis_perc_diff)) %>% 
-  select(., PD_median_diff:FDis_pd) %>%
-  summarise_all(unique) %>% 
-  mutate(., contrast = "WF Pasture 60% vs 50%", .before = 1)
-
-
-# Bind in a dataframe
-contrast_pastures <- bind_rows(contrast_P60_50 , contrast_P60_40, contrast_P60_30,
-                               contrast_P60_20, contrast_P60_10, contrast_P60_0) %>% 
-   mutate(., contrast = factor(contrast, levels = c("WF Pasture 60% vs 50%",
-                                                     "WF Pasture 60% vs 40%",
-                                                     "WF Pasture 60% vs 30%",
-                                                     "WF Pasture 60% vs 20%",
-                                                     "WF Pasture 60% vs 10%",
-                                                     "WF Pasture 60% vs 0%")))
-
-# Probability of direction plot
-ggplot(contrast_pastures, aes(x = contrast)) +
-  geom_point(aes(y = PD_pd, color = "PD")) +
-  geom_point(aes(y = MPD_pd, color = "MPD")) +
-  geom_point(aes(y = MNTD_pd, color = "MNTD")) +
-  geom_point(aes(y = ED_pd, color = "ED")) +
-  geom_point(aes(y = EDR_pd, color = "EDR")) +
-  geom_point(aes(y = FRic_pd, color = "FRic")) +
-  geom_point(aes(y = FEve_pd, color = "FEve")) +
-  geom_point(aes(y = FDis_pd, color = "FDiv")) +
-  geom_point(aes(y = FDiv_pd, color = "FDis")) +  
-  geom_hline(yintercept = 0.975) +
-  ylab("Probability of direction") +
-  xlab("Pasture difference") +
-  labs(color="Index") +
-  ggtitle("WF pasture") +
-  scale_color_viridis(discrete = T)
-
-# medians plot
-ggplot(contrast_pastures) +
-  geom_pointrange(aes(y = "PD",
-                      x = PD_median_diff,
-                      xmin = PD_median_diff_lo,
-                      xmax = PD_median_diff_hi)) +
-  geom_text(aes(x = (PD_median_diff_hi+20), y = "PD",label = round(PD_pd,2)), size = 2.5) +
-  geom_pointrange(aes(y = "MPD",
-                      x = MPD_median_diff,
-                      xmin = MPD_median_diff_lo,
-                      xmax = MPD_median_diff_hi)) +
-  geom_text(aes(x = (MPD_median_diff_hi+20), y = "MPD",label = round(MPD_pd,2)), size = 2.5) +
-  geom_pointrange(aes(y = "MNTD",
-                      x = MNTD_median_diff,
-                      xmin = MNTD_median_diff_lo,
-                      xmax = MNTD_median_diff_hi)) +
-  geom_text(aes(x = (MNTD_median_diff_hi+20), y = "MNTD",label = round(MNTD_pd,2)), size = 2.5) +
-  geom_pointrange(aes(y = "ED",
-                      x = ED_median_diff,
-                      xmin = ED_median_diff_lo,
-                      xmax = ED_median_diff_hi)) +
-  geom_text(aes(x = (ED_median_diff_hi+20), y = "ED",label = round(ED_pd,2)), size = 2.5) +
-  geom_pointrange(aes(y = "EDR",
-                      x = EDR_median_diff,
-                      xmin = EDR_median_diff_lo,
-                      xmax = EDR_median_diff_hi)) +
-  geom_text(aes(x = (EDR_median_diff_hi+20), y = "EDR",label = round(EDR_pd,2)), size = 2.5) +
-  geom_pointrange(aes(y = "FRic",
-                      x = FRic_median_diff,
-                      xmin = FRic_median_diff_lo,
-                      xmax = FRic_median_diff_hi)) +
-  geom_text(aes(x = (FRic_median_diff_hi+20), y = "FRic",label = round(FRic_pd,2)), size = 2.5) +
-  geom_pointrange(aes(y = "FEve",
-                      x = FEve_median_diff,
-                      xmin = FEve_median_diff_lo,
-                      xmax = FEve_median_diff_hi)) +
-  geom_text(aes(x = (FEve_median_diff_hi+20), y = "FEve",label = round(FEve_pd,2)), size = 2.5) +
-  geom_pointrange(aes(y = "FDiv",
-                      x = FDiv_median_diff,
-                      xmin = FDiv_median_diff_lo,
-                      xmax = FDiv_median_diff_hi)) +
-  geom_text(aes(x = (FDiv_median_diff_hi+20), y = "FDiv",label = round(FDiv_pd,2)), size = 2.5) +
-  geom_pointrange(aes(y = "FDis",
-                      x = FDis_median_diff,
-                      xmin = FDis_median_diff_lo,
-                      xmax = FDis_median_diff_hi)) +
-  geom_text(aes(x = (FDis_median_diff_hi+20), y = "FDis",label = round(FDis_pd,2)), size = 2.5) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "grey")+
-  labs(color = "Metrics") +
-  ylab("Metrics") +
-  xlab("Median difference and 90% CI") +
-  facet_grid(~contrast) +
-  theme_test()
-
-
-# Ses metrics ####
+# Ses metrics (This is a test, not definitive)
 
 PD_FD_F %>% na.omit() %>% 
   select(., starts_with("ses")) %>%
@@ -635,26 +516,18 @@ PD_FD_F %>% na.omit() %>%
   mutate_all(., function(x) {(x/1000)*100}) %>%  view()
 
 
-PD_FD_0 %>%
+PD_FD_F %>%
   select(., starts_with("ses")) %>% 
   gather() %>% 
   ggplot(aes(value)) +
   geom_density() +
   #geom_vline(xintercept = c(-1.96, 1.96)) +
-  ggtitle("Pasture 0%") +
+  ggtitle("Forest") +
   facet_wrap(~ key, scales = "free") 
 
 
-
-
-
-
-
-
-
-
-
 ## 5.2 Differences between sharing/sparing ####
+# compute median, Credible Intervals and p_direction
 
 # --- Low Yield ---
 n_pts <- unique(PD_FD_metrics_diff$n_pt)
@@ -711,8 +584,11 @@ prob_dir_diff_low[[n]] <- PD_FD_metrics_diff %>%
   summarise_all(., unique)
 }
 
+# Bind
 prob_dir_diff_low <- bind_rows(prob_dir_diff_low, .id = "n_pt") %>% 
-  mutate(., n_pt = factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")))
+  mutate(., n_pt = 
+           factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")),
+         Yield = "Low", .before = 1)
 
 # --- High Yield ---
 prob_dir_diff_high <- c()
@@ -768,287 +644,120 @@ for (n in n_pts) {
     summarise_all(., unique)
 }
 
+# Bind
 prob_dir_diff_high <- bind_rows(prob_dir_diff_high, .id = "n_pt") %>% 
-  mutate(., n_pt = factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")))
+  mutate(., n_pt = 
+           factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")),
+         Yield = "High", .before = 1)
 
-# Bind results
-prob_dir_sharing_sparing <- bind_rows(
-  (left_join(prob_dir_diff_low, medians_diff_low) %>%
-     mutate (., Yield = "Low", .before = 1)),
-  (left_join(prob_dir_diff_high, medians_diff_high) %>%
-     mutate (., Yield = "High", .before = 1)))
+# format for easier plotting
+prob_dir_sharing_sparing <- bind_rows(prob_dir_diff_low, prob_dir_diff_high)
+prob_dir_sharing_sparing <- prob_dir_sharing_sparing %>% 
+  select(., Yield, n_pt, starts_with("PD")) %>% 
+  rename(., median = PD_median_diff, 
+         CI_low = PD_median_diff_lo, 
+         CI_high = PD_median_diff_hi, 
+         pd = PD_pd) %>%
+  mutate(.,index = "PD") %>% 
+  bind_rows(., 
+            select(prob_dir_sharing_sparing, Yield, n_pt, starts_with("MPD")) %>% 
+              rename(., median = MPD_median_diff, 
+                     CI_low = MPD_median_diff_lo, 
+                     CI_high = MPD_median_diff_hi, 
+                     pd = MPD_pd) %>% 
+              mutate(.,index = "MPD")) %>% 
+  bind_rows(., 
+            select(prob_dir_sharing_sparing, Yield, n_pt, starts_with("MNTD")) %>% 
+              rename(., median = MNTD_median_diff, 
+                     CI_low = MNTD_median_diff_lo, 
+                     CI_high = MNTD_median_diff_hi, 
+                     pd = MNTD_pd) %>% 
+              mutate(.,index = "MNTD")) %>%
+  bind_rows(., 
+            select(prob_dir_sharing_sparing, Yield, n_pt, starts_with("ED_")) %>% 
+              rename(., median = ED_median_diff, 
+                     CI_low = ED_median_diff_lo, 
+                     CI_high = ED_median_diff_hi, 
+                     pd = ED_pd) %>% 
+              mutate(.,index = "ED")) %>%
+  bind_rows(., 
+            select(prob_dir_sharing_sparing, Yield, n_pt, starts_with("EDR")) %>% 
+              rename(., median = EDR_median_diff, 
+                     CI_low = EDR_median_diff_lo, 
+                     CI_high = EDR_median_diff_hi, 
+                     pd = EDR_pd) %>% 
+              mutate(.,index = "EDR")) %>%
+  bind_rows(., 
+            select(prob_dir_sharing_sparing, Yield, n_pt, starts_with("FRic")) %>% 
+              rename(., median = FRic_median_diff, 
+                     CI_low = FRic_median_diff_lo, 
+                     CI_high = FRic_median_diff_hi, 
+                     pd = FRic_pd) %>% 
+              mutate(.,index = "FRic")) %>% 
+  bind_rows(., 
+            select(prob_dir_sharing_sparing, Yield, n_pt, starts_with("FEve")) %>% 
+              rename(., median = FEve_median_diff, 
+                     CI_low = FEve_median_diff_lo, 
+                     CI_high = FEve_median_diff_hi, 
+                     pd = FEve_pd) %>% 
+              mutate(.,index = "FEve")) %>%
+  bind_rows(., 
+            select(prob_dir_sharing_sparing, Yield, n_pt, starts_with("FDiv")) %>% 
+              rename(., median = FDiv_median_diff, 
+                     CI_low = FDiv_median_diff_lo, 
+                     CI_high = FDiv_median_diff_hi, 
+                     pd = FDiv_pd) %>% 
+              mutate(.,index = "FDiv")) %>%
+  bind_rows(., 
+            select(prob_dir_sharing_sparing, Yield, n_pt, starts_with("FDis")) %>% 
+              rename(., median = FDis_median_diff, 
+                     CI_low = FDis_median_diff_lo, 
+                     CI_high = FDis_median_diff_hi, 
+                     pd = FDis_pd) %>% 
+              mutate(.,index = "FDis"))
 
-
+## 5.2.1 Plots for sharing/sparing ####
 
 # Probability of direction plot
 ggplot(prob_dir_sharing_sparing, aes(x = n_pt)) + 
-  geom_point(aes(y = PD_pd, color = "PD")) +
-  geom_point(aes(y = MPD_pd, color = "MPD")) +
-  geom_point(aes(y = MNTD_pd, color = "MNTD")) +
-  geom_point(aes(y = ED_pd, color = "ED")) +
-  geom_point(aes(y = EDR_pd, color = "EDR")) +
-  geom_point(aes(y = FRic_pd, color = "FRic")) +
-  geom_point(aes(y = FEve_pd, color = "FEve")) +
-  geom_point(aes(y = FDiv_pd, color = "FDiv")) +
-  geom_point(aes(y = FDis_pd, color = "FDis")) +
+  geom_point(aes(y = pd, color = index)) +
   geom_hline(yintercept = 0.975) +
+  facet_grid(~Yield) +
   ylab("Probability of direction") +
   xlab("Number of management units") +
-  facet_grid(~Yield)+
-  ggtitle("Low Yield") +
   labs(color="Index") +
   scale_color_viridis(discrete = T)
-<<<<<<< HEAD
-# # High
-# ggplot(prob_dir_diff_high, aes(x = n_pt)) + 
-#   geom_point(aes(y = PD_pd, color = "PD")) +
-#   geom_point(aes(y = MPD_pd, color = "MPD")) +
-#   geom_point(aes(y = MNTD_pd, color = "MNTD")) +
-#   geom_point(aes(y = ED_pd, color = "ED")) +
-#   geom_point(aes(y = EDR_pd, color = "EDR")) +
-#   geom_point(aes(y = FRic_pd, color = "FRic")) +
-#   geom_point(aes(y = FEve_pd, color = "FEve")) +
-#   geom_point(aes(y = FDiv_pd, color = "FDiv")) +
-#   geom_point(aes(y = FDis_pd, color = "FDis")) +
-#   geom_hline(yintercept = 0.975) +
-#   #ylim(0.95,1) +
-#   ylab("Probability of direction") +
-#   xlab("Number of management units") +
-#   ggtitle("High Yield") +
-#   labs(color="Index") +
-#   scale_color_viridis(discrete = T)
-=======
-
-# Plots
-ggplot(prob_dir_diff_high, aes(x = as.numeric(n_pt))) + 
-  geom_point(aes(y = pd_PD, color = "PD")) +
-  geom_point(aes(y = pd_MPD, color = "MPD")) +
-  geom_point(aes(y = pd_MNTD, color = "MNTD")) +
-  geom_point(aes(y = pd_ED, color = "ED")) +
-  geom_point(aes(y = pd_EDR, color = "EDR")) +
-  geom_point(aes(y = pd_FRic, color = "FRic")) +
-  geom_point(aes(y = pd_FEve, color = "FEve")) +
-  geom_point(aes(y = pd_FDiv, color = "FDiv")) +
-  geom_point(aes(y = pd_FDis, color = "FDis")) +
-  geom_hline(yintercept = 0.975) +
-  #ylim(0.95,1) +
-  ylab("Probability of direction") +
-  xlab("Number of management units") +
-  ggtitle("High Yield") +
-  labs(color="Index") +
-  scale_color_viridis(discrete = T)
-
-# Medians
-# medians along increasing unit
-n_pts <- unique(PD_FD_metrics_diff$n_pt)
-medians_diff_low <- c()
-for (n in n_pts) {
-  medians_diff_low[[n]] <- PD_FD_metrics_diff %>%
-    na.omit() %>% 
-    filter(., n_pt == n, Yield == "Low") %>%
-    select(PD:sesFDis) %>% 
-    mutate(median_PD = median(PD),
-           CI_lo_PD = hdci(PD)[,1],
-           CI_hi_PD = hdci(PD)[,2],
-           median_MPD = median(MPD),
-           CI_lo_MPD = hdci(MPD)[,1],
-           CI_hi_MPD = hdci(MPD)[,2],
-           median_MNTD = median(MNTD),
-           CI_lo_MNTD = hdci(MNTD)[,1],
-           CI_hi_MNTD = hdci(MNTD)[,2],
-           median_ED = median(ED),
-           CI_lo_ED = hdci(ED)[,1],
-           CI_hi_ED = hdci(ED)[,2],
-           median_EDR = median(EDR),
-           CI_lo_EDR = hdci(EDR)[,1],
-           CI_hi_EDR = hdci(EDR)[,2],
-           median_FRic = median(FRic),
-           CI_lo_FRic = hdci(FRic)[,1],
-           CI_hi_FRic = hdci(FRic)[,2],
-           median_FEve = median(FEve),
-           CI_lo_FEve = hdci(FEve)[,1],
-           CI_hi_FEve = hdci(FEve)[,2],
-           median_FDiv = median(FDiv),
-           CI_lo_FDiv = hdci(FDiv)[,1],
-           CI_hi_FDiv = hdci(FDiv)[,2],
-           median_FDis = median(FDis),
-           CI_lo_FDis = hdci(FDis)[,1],
-           CI_hi_FDis = hdci(FDis)[,2]) %>% 
-    select(., median_PD:CI_hi_FDis) %>% 
-    mutate_all(., as.numeric)
-}
-medians_diff_low <- bind_rows(medians_diff_low, .id = "n_pt") %>% 
-  group_by(., n_pt) %>% 
-  summarise_all(., mean) %>% 
-  mutate(., n_pt = factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")))
-
-#high
-n_pts <- unique(PD_FD_metrics_diff$n_pt)
-medians_diff_high <- c()
-for (n in n_pts) {
-  medians_diff_high[[n]] <- PD_FD_metrics_diff %>%
-    na.omit() %>% 
-    filter(., n_pt == n, Yield == "High") %>%
-    select(PD:sesFDis) %>% 
-    mutate(median_PD = median(PD),
-           CI_lo_PD = hdci(PD)[,1],
-           CI_hi_PD = hdci(PD)[,2],
-           median_MPD = median(MPD),
-           CI_lo_MPD = hdci(MPD)[,1],
-           CI_hi_MPD = hdci(MPD)[,2],
-           median_MNTD = median(MNTD),
-           CI_lo_MNTD = hdci(MNTD)[,1],
-           CI_hi_MNTD = hdci(MNTD)[,2],
-           median_ED = median(ED),
-           CI_lo_ED = hdci(ED)[,1],
-           CI_hi_ED = hdci(ED)[,2],
-           median_EDR = median(EDR),
-           CI_lo_EDR = hdci(EDR)[,1],
-           CI_hi_EDR = hdci(EDR)[,2],
-           median_FRic = median(FRic),
-           CI_lo_FRic = hdci(FRic)[,1],
-           CI_hi_FRic = hdci(FRic)[,2],
-           median_FEve = median(FEve),
-           CI_lo_FEve = hdci(FEve)[,1],
-           CI_hi_FEve = hdci(FEve)[,2],
-           median_FDiv = median(FDiv),
-           CI_lo_FDiv = hdci(FDiv)[,1],
-           CI_hi_FDiv = hdci(FDiv)[,2],
-           median_FDis = median(FDis),
-           CI_lo_FDis = hdci(FDis)[,1],
-           CI_hi_FDis = hdci(FDis)[,2]) %>% 
-    select(., median_PD:CI_hi_FDis) %>% 
-    mutate_all(., as.numeric)
-}
-medians_diff_high <- bind_rows(medians_diff_high, .id = "n_pt") %>% 
-  group_by(., n_pt) %>% 
-  summarise_all(., mean) %>% 
-  mutate(., n_pt = factor(n_pt, levels = c("10", "50", "100", "150", "200", "250", "300", "350", "400", "450")))
-
->>>>>>> 3d78f1c997d74f74786673a89b657c1184134900
 
 
 # Medians plot
-ggplot(prob_dir_sharing_sparing, aes(group = Yield)) +
-  geom_pointrange(aes(y = "PD",
-                      x = PD_median_diff,
-                      xmin = PD_median_diff_lo,
-                      xmax = PD_median_diff_hi, color = Yield), position = position_dodge2(width = 0.3)) +
-  geom_text(aes(x = (PD_median_diff_hi+20), y = "PD",label = round(PD_pd,2)), 
-            size = 3, position = position_dodge2(width = 0.3)) +
-  geom_pointrange(aes(y = "MPD",
-                      x = MPD_median_diff,
-                      xmin = MPD_median_diff_lo,
-                      xmax = MPD_median_diff_hi, color = Yield), position = position_dodge2(width = 0.3)) +
-  geom_text(aes(x = (MPD_median_diff_hi+20), y = "MPD",label = round(MPD_pd,2)),
-            size = 3, position = position_dodge2(width = 0.3)) +
-  geom_pointrange(aes(y = "MNTD",
-                      x = MNTD_median_diff,
-                      xmin = MNTD_median_diff_lo,
-                      xmax = MNTD_median_diff_hi, color = Yield), position = position_dodge2(width = 0.3)) +
-  geom_text(aes(x = (MNTD_median_diff_hi+20), y = "MNTD",label = round(MNTD_pd,2)), 
-            size = 3, position = position_dodge2(width = 0.3)) +
-  geom_pointrange(aes(y = "ED",
-                      x = ED_median_diff,
-                      xmin = ED_median_diff_lo,
-                      xmax = ED_median_diff_hi, color = Yield), position = position_dodge2(width = 0.3)) +
-  geom_text(aes(x = (ED_median_diff_hi+20), y = "ED",label = round(ED_pd,2)),
-            size = 3, position = position_dodge2(width = 0.3)) +
-  geom_pointrange(aes(y = "EDR",
-                      x = EDR_median_diff,
-                      xmin = EDR_median_diff_lo,
-                      xmax = EDR_median_diff_hi, color = Yield), position = position_dodge2(width = 0.3)) +
-  geom_text(aes(x = (EDR_median_diff_hi+20), y = "EDR",label = round(EDR_pd,2)), 
-            size = 3, position = position_dodge2(width = 0.3)) +
-  geom_pointrange(aes(y = "FRic",
-                      x = FRic_median_diff,
-                      xmin = FRic_median_diff_lo,
-                      xmax = FRic_median_diff_hi, color = Yield), position = position_dodge2(width = 0.3)) +
-  geom_text(aes(x = (FRic_median_diff_hi+20), y = "FRic",label = round(FRic_pd,2)), 
-            size = 3, position = position_dodge2(width = 0.3)) +
-  geom_pointrange(aes(y = "FEve",
-                      x = FEve_median_diff,
-                      xmin = FEve_median_diff_lo,
-                      xmax = FEve_median_diff_hi, color = Yield), position = position_dodge2(width = 0.3)) +
-  geom_text(aes(x = (FEve_median_diff_hi+20), y = "FEve",label = round(FEve_pd,2)), 
-            size = 3, position = position_dodge2(width = 0.3)) +
-  geom_pointrange(aes(y = "FDiv",
-                      x = FDiv_median_diff,
-                      xmin = FDiv_median_diff_lo,
-                      xmax = FDiv_median_diff_hi, color = Yield), position = position_dodge2(width = 0.3)) +
-  geom_text(aes(x = (FDiv_median_diff_hi+20), y = "FDiv",label = round(FDiv_pd,2)), 
-            size = 3, position = position_dodge2(width = 0.3)) +
-  geom_pointrange(aes(y = "FDis",
-                      x = FDis_median_diff,
-                      xmin = FDis_median_diff_lo,
-                      xmax = FDis_median_diff_hi, color = Yield), position = position_dodge2(width = 0.3)) +
-  geom_text(aes(x = (FDis_median_diff_hi+20), y = "FDis",label = round(FDis_pd,2)),
-            size = 3, position = position_dodge2(width = 0.3)) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "grey")+
-  scale_color_manual(values = c("#FFC20A", "#0C7BDC")) +
-  labs(color = "Yield") +
-  ylab("Metrics") +
-  xlab("Median difference and 90% CI") +
-  facet_grid(~n_pt) +
-  theme_test(base_size = 14) +
-  theme(legend.position="bottom")
+P_func_farm_medians <- function(x){
+  prob_dir_sharing_sparing %>% filter(., index == x) %>% 
+    ggplot(., aes(x = n_pt, y = median, color = Yield, group = Yield)) +
+    geom_point(position = position_dodge2(width = 0.5)) +
+    geom_linerange(aes(ymin = CI_low,
+                       ymax = CI_high),
+                   position = position_dodge2(width = 0.5)) +
+      geom_text(aes(y = CI_high + (CI_high*0.1),
+                    x = n_pt,
+                    label = round(pd,2)),
+                color = "black",
+                size = 4,
+                position = position_dodge2(width = 0.5)) +
+    scale_color_manual(values = c("#FFC20A", "#0C7BDC")) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    xlab(NULL) +
+    ylab(x) +
+    theme_test(base_size = 14)
+    }
 
+P_func_farm_medians("PD")
 
-# # plot separately
-# ggplot(prob_dir_diff_high) +
-#   geom_pointrange(aes(y = "PD",
-#                       x = PD_median_diff,
-#                       xmin = PD_median_diff_lo,
-#                       xmax = PD_median_diff_hi)) +
-#   geom_text(aes(x = (PD_median_diff_hi+20), y = "PD",label = round(PD_pd,2)), size = 2.5) +
-#   geom_pointrange(aes(y = "MPD",
-#                       x = MPD_median_diff,
-#                       xmin = MPD_median_diff_lo,
-#                       xmax = MPD_median_diff_hi)) +
-#   geom_text(aes(x = (MPD_median_diff_hi+20), y = "MPD",label = round(MPD_pd,2)), size = 2.5) +
-#   geom_pointrange(aes(y = "MNTD",
-#                       x = MNTD_median_diff,
-#                       xmin = MNTD_median_diff_lo,
-#                       xmax = MNTD_median_diff_hi)) +
-#   geom_text(aes(x = (MNTD_median_diff_hi+20), y = "MNTD",label = round(MNTD_pd,2)), size = 2.5) +
-#   geom_pointrange(aes(y = "ED",
-#                       x = ED_median_diff,
-#                       xmin = ED_median_diff_lo,
-#                       xmax = ED_median_diff_hi)) +
-#   geom_text(aes(x = (ED_median_diff_hi+20), y = "ED",label = round(ED_pd,2)), size = 2.5) +
-#   geom_pointrange(aes(y = "EDR",
-#                       x = EDR_median_diff,
-#                       xmin = EDR_median_diff_lo,
-#                       xmax = EDR_median_diff_hi)) +
-#   geom_text(aes(x = (EDR_median_diff_hi+20), y = "EDR",label = round(EDR_pd,2)), size = 2.5) +
-#   geom_pointrange(aes(y = "FRic",
-#                       x = FRic_median_diff,
-#                       xmin = FRic_median_diff_lo,
-#                       xmax = FRic_median_diff_hi)) +
-#   geom_text(aes(x = (FRic_median_diff_hi+20), y = "FRic",label = round(FRic_pd,2)), size = 2.5) +
-#   geom_pointrange(aes(y = "FEve",
-#                       x = FEve_median_diff,
-#                       xmin = FEve_median_diff_lo,
-#                       xmax = FEve_median_diff_hi)) +
-#   geom_text(aes(x = (FEve_median_diff_hi+20), y = "FEve",label = round(FEve_pd,2)), size = 2.5) +
-#   geom_pointrange(aes(y = "FDiv",
-#                       x = FDiv_median_diff,
-#                       xmin = FDiv_median_diff_lo,
-#                       xmax = FDiv_median_diff_hi)) +
-#   geom_text(aes(x = (FDiv_median_diff_hi+20), y = "FDiv",label = round(FDiv_pd,2)), size = 2.5) +
-#   geom_pointrange(aes(y = "FDis",
-#                       x = FDis_median_diff,
-#                       xmin = FDis_median_diff_lo,
-#                       xmax = FDis_median_diff_hi)) +
-#   geom_text(aes(x = (FDis_median_diff_hi+20), y = "FDis",label = round(FDis_pd,2)), size = 2.5) +
-#   geom_vline(xintercept = 0, linetype = "dashed", color = "red")+
-#   labs(color = "Metrics") +
-#   ylab("Metrics") +
-#   xlab("Median difference and 90% CI") +
-#   ggtitle("High")+
-#   facet_grid(~n_pt) +
-#   theme_test()
-# 
-# 
-# 
-# 
+plot_medians_farm <- c()
+for (i in indices) {
+  plot_medians_farm[[i]] <-  P_func_farm_medians(i)
+}
+
+ggarrange(plotlist = plot_medians_farm, 
+          common.legend = T, 
+          legend = "bottom")
+
