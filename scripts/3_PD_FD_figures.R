@@ -396,7 +396,7 @@ contrast_habitats <- contrast_habitats %>%
          CI_low = PD_median_diff_lo, 
          CI_high = PD_median_diff_hi, 
          pd = PD_pd) %>%
-  mutate(.,index = "PD") %>% 
+  mutate(.,index = "FPD") %>% 
   bind_rows(., 
             select(contrast_habitats, contrast, starts_with("MPD")) %>% 
               rename(., median = MPD_median_diff, 
@@ -478,13 +478,13 @@ ggplot(.) +
                         ymax = CI_high)) +
     geom_text(aes(y = CI_high + (CI_high*0.1), 
                   x = contrast,
-                  label = round(pd,2)), size = 4) +
+                  label = round(pd,2)*100), size = 4) +
     xlab(NULL) +
     ylab(x) +
     theme_test(base_size = 14)
   }
 
-P_func_hab_medians("PD")
+P_func_hab_medians("FPD")
 
 indices <- unique(contrast_habitats$index)
 plot_medians_hab <- c()
@@ -654,7 +654,7 @@ contrast_farms <- contrast_farms %>%
          CI_low = PD_median_diff_lo, 
          CI_high = PD_median_diff_hi, 
          pd = PD_pd) %>%
-  mutate(.,index = "PD") %>% 
+  mutate(.,index = "FPD") %>% 
   bind_rows(., 
             select(contrast_farms, Yield, n_pt, starts_with("MPD")) %>% 
               rename(., median = MPD_median_diff, 
@@ -735,9 +735,9 @@ P_func_farm_medians <- function(x){
                    position = position_dodge2(width = 0.5)) +
       geom_text(aes(y = CI_high + (CI_high*0.05),
                     x = n_pt,
-                    label = ifelse(pd >= 0.975, "*", "")),
+                    label = ifelse(pd >= 0.9, "*", "")),
                 color = "black",
-                size = 4,
+                size = 6,
                 position = position_dodge2(width = 0.5)) +
     scale_color_manual(values = c("#FFC20A", "#0C7BDC")) +
     geom_hline(yintercept = 0, linetype = "dashed") +
@@ -746,7 +746,7 @@ P_func_farm_medians <- function(x){
     theme_test(base_size = 14)
     }
 
-P_func_farm_medians("PD")
+P_func_farm_medians("FPD")
 
 plot_medians_farm <- c()
 for (i in indices) {
@@ -776,3 +776,4 @@ ggsave("figures/medians_sharing-sparing.png",
        units = "cm",
        bg = "white",
        scale = 1.9)
+
