@@ -1,16 +1,15 @@
 ## Header ----
-## Script name: PD_FD_figures
+## From paper: Avian phylogenetic and functional diversity are better conserved 
+## by land-sparing than land-sharing farming in lowland tropical forests.
+## Journal of Applied Ecology
 ##
-## Purpose of script: Plot PD and FD across habitats and sharing/sparing
-## Author: Giovanny Perez
-## Date Created: March 2023
+## Purpose of script: Prepare and plot results
+##
+## Author: Giovanny Perez, Simon Mills
 ## Email: gaperezzuleta1@sheffield.ac.uk, gapz01@gmail.com
-##
-## Notes:
-##
 
 
-# 0. LOAD DATA AND PACKAGES ####
+# 0. Load data and packages ####
 
 # Required packages
 library(tidyverse)
@@ -21,10 +20,10 @@ library(tidybayes)
 library(bayestestR)
 
 # Load dataframes with results
-PD_FD_habitats <- read_csv("outputs/PD_FD_habitats.csv")
-PD_FD_metrics <-  read_csv("outputs/PD_FD_sparing-sharing.csv")
+PD_FD_habitats <- readRDS("outputs/PD_FD_habitats.rds")
+PD_FD_farming <-  readRDS("outputs/PD_FD_farming.rds")
 
-# 1. HABITAT ####
+# 1. Habitat ####
 
 # create a "gap" in the dataframe to better plot forest and WF-pastures
 PD_FD_to_plot <- PD_FD_habitats %>%
@@ -50,8 +49,8 @@ P_func_hab <- function(x){
                   position = position_dodge(width = 1),
                   color = c("#40B0A6", "transparent", rep("#E1BE6A",7)),
                   show.legend = F) +
-    scale_fill_manual(values = c("#40B0A6", "transparent", rep("#E1BE6A",7))) +
-    scale_x_discrete(labels=c("", "", "60", "50", "40", "30", "20", "10", "0"), 
+    scale_fill_manual(values = c("#40B0A6", rep("#E1BE6A",7), "transparent")) +
+    scale_x_discrete(labels=c("For", "", "60", "50", "40", "30", "20", "10", "0"), 
                      expand = c(0.125,0,0,0)) +
     geom_hline(yintercept = 0, size = 0.1) +
     xlab(NULL) +
@@ -68,51 +67,52 @@ P_func_hab(PD) #test function
 
 # create plots
 #PD
-P1 <- P_func_hab(PD) + scale_y_continuous(breaks = c(500, 1500, 2500)) + ylab("FPD")
+P1 <- P_func_hab(PD) + ylab("FPD") #+ scale_y_continuous(breaks = c(500, 1500, 2500)) 
 P2 <- P_func_hab(sesPD) + ylab("SES.FPD") 
 P3 <- P_func_hab(MPD) 
 P4 <- P_func_hab(sesMPD) + ylab("SES.MPD") 
 P5 <- P_func_hab(MNTD) 
-P6 <- P_func_hab(sesMNTD) + scale_y_continuous(breaks = seq(-3, 3, by = 1.5)) + ylab("SES.MNTD") 
-P7 <- P_func_hab(ED) + scale_y_continuous(breaks = c(500, 1000, 1500)) + theme(axis.text.x=element_text())
-P8 <- P_func_hab(EDR*1000) + scale_y_continuous(breaks = seq(0, 1, by = 0.25)) + theme(axis.text.x=element_text())
+P6 <- P_func_hab(sesMNTD) + scale_y_continuous(breaks = seq(-4, 2, by = 2)) + ylab("SES.MNTD") 
+P7 <- P_func_hab(ED) + theme(axis.text.x=element_text()) #+ scale_y_continuous(breaks = c(500, 1000, 1500)) 
+P8 <- P_func_hab(EDR*1000) + scale_y_continuous(breaks = seq(0, 1.2, by = 0.4)) + theme(axis.text.x=element_text())
 #FD
 F1 <- P_func_hab(FRic) 
 F2 <- P_func_hab(sesFRic) + ylab("SES.FRic") 
 F3 <- P_func_hab(FEve)
-F4 <- P_func_hab(sesFEve) + scale_y_continuous(breaks = seq(-3, 3, by = 1.5)) + ylab("SES.FEve") 
-F5 <- P_func_hab(FDiv)
+F4 <- P_func_hab(sesFEve) + ylab("SES.FEve") + scale_y_continuous(breaks = seq(-4, 4, by = 2))  
+F5 <- P_func_hab(FDiv) + scale_y_continuous(breaks = seq(0, 0.8, by = 0.2))
 F6 <- P_func_hab(sesFDiv) + ylab("SES.FDiv") 
 F7 <- P_func_hab(FDis) + theme(axis.text.x=element_text())
-F8 <- P_func_hab(sesFDis)+ scale_y_continuous(breaks = seq(-3, 3, by = 1.5)) + theme(axis.text.x=element_text()) + ylab("SES.FDis") 
+F8 <- P_func_hab(sesFDis) + ylab("SES.FDis") + theme(axis.text.x=element_text()) #+ scale_y_continuous(breaks = seq(-3, 3, by = 1.5))   
 
 #Arrange plots (except MPD and FDiv --> to SOM)
 PD_FD_habs <-
-  ggarrange(P1, P2, F1, F2, P5, P6, F3, F4, P7, P8, F7, F8, 
-            nrow = 3, ncol = 4,
-            labels = c("A", "B", "G", "H", "C", "D", "I", "J", "E", "F", "K", "L"), 
+  ggarrange(P1, P2, F1, F2, P5, P6, F3, F4, P3, P4, F5, F6, P7, P8, F7, F8, 
+            nrow = 4, ncol = 4,
+            #labels = c("A", "B", "G", "H", "C", "D", "I", "J", "E", "F", "K", "L"), 
             legend = "none", common.legend = TRUE,
             align = "v", font.label = list(size = 12, face = "bold"),
             label.x = 0.1)
+PD_FD_habs
 
 ggsave(filename = "habs.png",
        device = "png",
        plot = PD_FD_habs,
        path = "figures/",
        width = 30,
-       height = 15,
+       height = 17.8,
        units = "cm",
        bg = "white")
 
 
 
-# 2. FARM ####
+# 2. Farm ####
 # Using 100 management units 
-PD_FD_metrics_100 <- PD_FD_metrics %>% filter(., n_pt == 100) # change n_pt as desired
+PD_FD_farming_100 <- PD_FD_farming %>% filter(., n_pt == 100) # change n_pt as desired
 
 ### Function plot for two yield levels
 P_func_farm <- function(x){
-  ggplot(PD_FD_metrics_100, aes(x = Yield, y = {{x}}, fill = Management)) +
+  ggplot(PD_FD_farming_100, aes(x = Yield, y = {{x}}, fill = Management)) +
     geom_rect(aes(xmin=0.5,xmax=1.5,ymin=-Inf,ymax=Inf), fill="gray80") +
     geom_rect(aes(xmin=1.5,xmax=2.5,ymin=-Inf,ymax=Inf), fill="gray95") +
     geom_violin(position = position_dodge(width = 1), alpha = 0.5, scale = "width", color = "transparent") +
@@ -139,51 +139,48 @@ P_func_farm(PD) #test plot
 
 # PD
 P21 <- P_func_farm(PD) + ylab("FPD")
-P22 <- P_func_farm(sesPD) + scale_y_continuous(breaks = seq(-6, 3, by = 3)) + ylab("SESFPD")
+P22 <- P_func_farm(sesPD) + ylab("SESFPD") + scale_y_continuous(limits = c(-5,3), breaks = seq(-4, 2, by = 2)) 
 P23 <- P_func_farm(MPD)
 P24 <- P_func_farm(sesMPD) + ylab("SES.MPD")
 P25 <- P_func_farm(MNTD)
 P26 <- P_func_farm(sesMNTD) + ylab("SES.MNTD")
-P27 <- P_func_farm(ED) + scale_y_continuous(breaks = seq(0, 5000, by = 1000)) + theme(axis.text.x = element_text())
-P28 <- P_func_farm(EDR*1000) + scale_y_continuous(breaks = seq(0, 1.8, by = .6)) + theme(axis.text.x = element_text())
+P27 <- P_func_farm(ED) + theme(axis.text.x = element_text())
+P28 <- P_func_farm(EDR*1000) + scale_y_continuous(breaks = seq(0, 1.2, by = .4)) + theme(axis.text.x = element_text())
 # FD
-F21 <- P_func_farm(FRic) + scale_y_continuous(breaks = seq(0, 0.8, by = 0.2))
+F21 <- P_func_farm(FRic) #+ scale_y_continuous(breaks = seq(0, 0.8, by = 0.2))
 F22 <- P_func_farm(sesFRic) + ylim(c(-3,3)) + ylab("SES.FRic")
 F23 <- P_func_farm(FEve) 
-F24 <- P_func_farm(sesFEve) + ylab("SES.FEve")
-F25 <- P_func_farm(FDiv)
+F24 <- P_func_farm(sesFEve) + ylab("SES.FEve") + scale_y_continuous(breaks = seq(-4, 4, by = 2))
+F25 <- P_func_farm(FDiv) + scale_y_continuous(breaks = seq(0, 0.8, by = 0.2))
 F26 <- P_func_farm(sesFDiv) + ylab("SES.FDiv")
-F27 <- P_func_farm(FDis) + theme(axis.text.x = element_text())
+F27 <- P_func_farm(FDis) + theme(axis.text.x = element_text()) 
 F28 <- P_func_farm(sesFDis) + theme(axis.text.x = element_text())+ ylab("SES.FDis")
 
 # Arrange plots
 PD_FD_farm <- 
-  ggarrange(P21, P22, F21, F22, P25, P26, F23, F24, P27, P28, F27, F28, 
-            nrow = 3, ncol = 4,
-            labels = c("A", "B", "G", "H", "C", "D", "I", "J", "E", "F", "K", "L"), 
+  ggarrange(P21, P22, F21, F22, P25, P26, F23, F24, P23, P24, F25, F26, P27, P28, F27, F28, 
+            nrow = 4, ncol = 4,
+            #labels = c("A", "B", "G", "H", "C", "D", "I", "J", "E", "F", "K", "L"), 
             legend = "none", common.legend = TRUE,
             align = "v", font.label = list(size = 12, face = "bold"),
             label.x = 0.1)
+PD_FD_farm
 
 ggsave(filename = "farm.png",
        device = "png",
        plot = PD_FD_farm,
        path = "figures/",
        width = 30,
-       height = 15,
+       height = 17.8,
        units = "cm",
        bg = "white")
 
-
-
-
-
-## 3. DIFFERENCES ####
+## 3. Differences ####
 # compute subtractions
-PD_FD_metrics_sh <- filter(PD_FD_metrics, Management == "Sharing") 
-PD_FD_metrics_sp <- filter(PD_FD_metrics, Management == "Sparing")
-PD_FD_metrics_diff <- left_join(PD_FD_metrics_sh,
-                                PD_FD_metrics_sp, 
+PD_FD_farming_sh <- filter(PD_FD_farming, Management == "Sharing") 
+PD_FD_farming_sp <- filter(PD_FD_farming, Management == "Sparing")
+PD_FD_farming_diff <- left_join(PD_FD_farming_sh,
+                                PD_FD_farming_sp, 
                                 by = c("n_pt", "iter_id", "Yield"),
                                 suffix = c("_sh", "_sp")) %>%
   mutate(PD = PD_sp - PD_sh, #Sparing minus sharing              
@@ -206,7 +203,7 @@ PD_FD_metrics_diff <- left_join(PD_FD_metrics_sh,
 
 # Function plots
 P_func_diff <- function(x){
-  ggplot(PD_FD_metrics_diff, aes(x = n_pt, y = {{x}}, fill = Yield, color = Yield)) +
+  ggplot(PD_FD_farming_diff, aes(x = n_pt, y = {{x}}, fill = Yield, color = Yield)) +
     geom_violin(position = position_dodge(width = 1), alpha = 0.5, scale = "width", size = 0.1, color = "transparent") +
     #scale_colour_manual(values = c("transparent", "grey40")) +
     scale_fill_manual(values = c("grey0", "grey70")) +
@@ -234,77 +231,78 @@ P_func_diff(PD) # test plot
 P31 <- P_func_diff(PD) + ylab("FPD")
 P32 <- P_func_diff(sesPD) + scale_y_continuous(limits = c(-5,5), breaks = seq(-4,4,2)) + ylab("SES.FPD")
 P33 <- P_func_diff(MPD) 
-P34 <- P_func_diff(sesMPD)+ ylab("SES.MPD")
+P34 <- P_func_diff(sesMPD)+ ylab("SES.MPD") + scale_y_continuous(limits = c(-5,5), breaks = seq(-4,4,2))
 P35 <- P_func_diff(MNTD)
-P36 <- P_func_diff(sesMNTD)+ scale_y_continuous(limits = c(-5,5), breaks = seq(-4,4,2)) + ylab("SES.MNTD")
+P36 <- P_func_diff(sesMNTD)+ scale_y_continuous(limits = c(-5,4), breaks = seq(-4,4,2)) + ylab("SES.MNTD")
 P37 <- P_func_diff(ED) + theme(axis.text.x = element_text()) 
 P38 <- P_func_diff(EDR*1000) + theme(axis.text.x = element_text()) 
 #FD
 F31 <- P_func_diff(FRic)
 F32 <- P_func_diff(sesFRic) + scale_y_continuous(limits = c(-5,5), breaks = seq(-4,4,2)) + ylab("SES.FRic")
 F33 <- P_func_diff(FEve)
-F34 <- P_func_diff(sesFEve)+ scale_y_continuous(limits = c(-5,5), breaks = seq(-4,4,2)) + ylab("SES.FEve")
+F34 <- P_func_diff(sesFEve) + scale_y_continuous(limits = c(-5,5), breaks = seq(-4,4,2)) + ylab("SES.FEve")
 F35 <- P_func_diff(FDiv)
-F36 <- P_func_diff(sesFDiv) + ylab("SES.FDiv")
-F37 <- P_func_diff(FDis) + scale_y_continuous(limits = c(-0.025,0.025)) + theme(axis.text.x = element_text()) 
+F36 <- P_func_diff(sesFDiv) + ylab("SES.FDiv") + scale_y_continuous(limits = c(-5,4), breaks = seq(-4,4,2))
+F37 <- P_func_diff(FDis) + theme(axis.text.x = element_text()) 
 F38 <- P_func_diff(sesFDis) + theme(axis.text.x = element_text()) + ylab("SES.FDis")
 
 # Arrange plots
 PD_FD_diff <- 
-  ggarrange(P31, P32, F31, F32, P35, P36, F33, F34, P37, P38, F37, F38, 
-            nrow = 3, ncol = 4,
-            labels = c("A", "B", "G", "H", "C", "D", "I", "J", "E", "F", "K", "L"), 
+  ggarrange(P31, P32, F31, F32, P35, P36, F33, F34, P33, P34, F35, F36, P37, P38, F37, F38, 
+            nrow = 4, ncol = 4,
+            #labels = c("A", "B", "G", "H", "C", "D", "I", "J", "E", "F", "K", "L"), 
             legend = "none", common.legend = TRUE,
             align = "v", font.label = list(size = 12, face = "bold"),
             label.x = 0.1) 
+PD_FD_diff
 
 ggsave(filename = "diffs.png",
        device = "png",
        plot = PD_FD_diff,
        path = "figures/",
        width = 30,
-       height = 15,
+       height = 17.8,
        units = "cm",
        bg = "white")
 
 
-# 4. SOM FIGURE ####
-# Plots for MPD and FDiv (in SOM)
-P3 <- P_func_hab(MPD) + theme(axis.text.x=element_text())
-P4 <- P_func_hab(sesMPD) + theme(axis.text.x=element_text())
-F5 <- P_func_hab(FDiv) + theme(axis.text.x=element_text())
-F6 <- P_func_hab(sesFDiv) + theme(axis.text.x=element_text())
-P23 <- P_func_farm(MPD) + theme(axis.text.x=element_text())
-P24 <- P_func_farm(sesPD) + theme(axis.text.x=element_text())
-F25 <- P_func_farm(FDiv) + theme(axis.text.x=element_text())
-F26 <- P_func_farm(sesFDiv) + theme(axis.text.x=element_text())
-P33 <- P_func_diff(MPD) + theme(axis.text.x=element_text())
-P34 <- P_func_diff(sesMPD) + theme(axis.text.x=element_text())
-F35 <- P_func_diff(FDiv) + theme(axis.text.x=element_text())
-F36 <- P_func_diff(sesFDiv) + theme(axis.text.x=element_text())
+# # 4. SOM FIGURE
+# # Plots for MPD and FDiv (in SOM)
+# P3 <- P_func_hab(MPD) + theme(axis.text.x=element_text())
+# P4 <- P_func_hab(sesMPD) + theme(axis.text.x=element_text())
+# F5 <- P_func_hab(FDiv) + theme(axis.text.x=element_text())
+# F6 <- P_func_hab(sesFDiv) + theme(axis.text.x=element_text())
+# P23 <- P_func_farm(MPD) + theme(axis.text.x=element_text())
+# P24 <- P_func_farm(sesMPD) + theme(axis.text.x=element_text())
+# F25 <- P_func_farm(FDiv) + theme(axis.text.x=element_text())
+# F26 <- P_func_farm(sesFDiv) + theme(axis.text.x=element_text())
+# P33 <- P_func_diff(MPD) + theme(axis.text.x=element_text())
+# P34 <- P_func_diff(sesMPD) + theme(axis.text.x=element_text())
+# F35 <- P_func_diff(FDiv) + theme(axis.text.x=element_text())
+# F36 <- P_func_diff(sesFDiv) + theme(axis.text.x=element_text())
+# 
+# fig_SOM <- 
+#   ggarrange(P3, P4, F5, F6, P23, P24, F25, F26, P33, P34, F35, F36, 
+#             nrow = 3, ncol = 4,
+#             labels = "AUTO", 
+#             legend = "none",
+#             align = "hv", font.label = list(size = 12, face = "bold"))
+# 
+# ggsave(filename = "Fig_SOM.png",
+#        device = "png",
+#        plot = fig_SOM,
+#        path = "figures/",
+#        width = 30,
+#        height = 15,
+#        units = "cm",
+#        bg = "white")
 
-fig_SOM <- 
-  ggarrange(P3, P4, F5, F6, P23, P24, F25, F26, P33, P34, F35, F36, 
-            nrow = 3, ncol = 4,
-            labels = "AUTO", 
-            legend = "none",
-            align = "hv", font.label = list(size = 12, face = "bold"))
-
-ggsave(filename = "Fig_SOM.png",
-       device = "png",
-       plot = fig_SOM,
-       path = "figures/",
-       width = 30,
-       height = 15,
-       units = "cm",
-       bg = "white")
 
 
-
-# 5. ADDITIONAL RESULTS ####
+# 4. Additional results ####
 # To better show results, compute contrasts, p_direction, median and CI
 
-## 5.1 Differences between habitats ####
+## 4.1 Differences between habitats ####
 # Compute differences between forest minus WF-pastures
 
 # split into habitats
@@ -338,41 +336,41 @@ for (i in names(PD_FD_habitats_list)[-1]) {
            FEve_perc_diff = (FEve/((FEve_F + FEve_P)/2))*100,
            FDiv_perc_diff = (FDiv/((FDiv_F + FDiv_P)/2))*100,
            FDis_perc_diff = (FDis/((FDis_F + FDis_P)/2))*100) %>%
-    mutate(., PD_median_diff = median_hdci(PD_perc_diff, .width = 0.9)[["y"]],
-           PD_median_diff_lo = median_hdci(PD_perc_diff, .width = 0.9)[["ymin"]],
-           PD_median_diff_hi = median_hdci(PD_perc_diff, .width = 0.9)[["ymax"]],
+    mutate(., PD_median_diff = median_hdci(PD_perc_diff, .width = 0.95)[["y"]],
+           PD_median_diff_lo = median_hdci(PD_perc_diff, .width = 0.95)[["ymin"]],
+           PD_median_diff_hi = median_hdci(PD_perc_diff, .width = 0.95)[["ymax"]],
            PD_pd = p_direction(PD_perc_diff),
-           MPD_median_diff = median_hdci(MPD_perc_diff, .width = 0.9)[["y"]],
-           MPD_median_diff_lo = median_hdci(MPD_perc_diff, .width = 0.9)[["ymin"]],
-           MPD_median_diff_hi = median_hdci(MPD_perc_diff, .width = 0.9)[["ymax"]],
+           MPD_median_diff = median_hdci(MPD_perc_diff, .width = 0.95)[["y"]],
+           MPD_median_diff_lo = median_hdci(MPD_perc_diff, .width = 0.95)[["ymin"]],
+           MPD_median_diff_hi = median_hdci(MPD_perc_diff, .width = 0.95)[["ymax"]],
            MPD_pd = p_direction(MPD_perc_diff),
-           MNTD_median_diff = median_hdci(MNTD_perc_diff, .width = 0.9)[["y"]],
-           MNTD_median_diff_lo = median_hdci(MNTD_perc_diff, .width = 0.9)[["ymin"]],
-           MNTD_median_diff_hi = median_hdci(MNTD_perc_diff, .width = 0.9)[["ymax"]],
+           MNTD_median_diff = median_hdci(MNTD_perc_diff, .width = 0.95)[["y"]],
+           MNTD_median_diff_lo = median_hdci(MNTD_perc_diff, .width = 0.95)[["ymin"]],
+           MNTD_median_diff_hi = median_hdci(MNTD_perc_diff, .width = 0.95)[["ymax"]],
            MNTD_pd = p_direction(MNTD_perc_diff),
-           ED_median_diff = median_hdci(ED_perc_diff, .width = 0.9)[["y"]],
-           ED_median_diff_lo = median_hdci(ED_perc_diff, .width = 0.9)[["ymin"]],
-           ED_median_diff_hi = median_hdci(ED_perc_diff, .width = 0.9)[["ymax"]],
+           ED_median_diff = median_hdci(ED_perc_diff, .width = 0.95)[["y"]],
+           ED_median_diff_lo = median_hdci(ED_perc_diff, .width = 0.95)[["ymin"]],
+           ED_median_diff_hi = median_hdci(ED_perc_diff, .width = 0.95)[["ymax"]],
            ED_pd = p_direction(ED_perc_diff),
-           EDR_median_diff = median_hdci(EDR_perc_diff, .width = 0.9)[["y"]],
-           EDR_median_diff_lo = median_hdci(EDR_perc_diff, .width = 0.9)[["ymin"]],
-           EDR_median_diff_hi = median_hdci(EDR_perc_diff, .width = 0.9)[["ymax"]],
+           EDR_median_diff = median_hdci(EDR_perc_diff, .width = 0.95)[["y"]],
+           EDR_median_diff_lo = median_hdci(EDR_perc_diff, .width = 0.95)[["ymin"]],
+           EDR_median_diff_hi = median_hdci(EDR_perc_diff, .width = 0.95)[["ymax"]],
            EDR_pd = p_direction(EDR_perc_diff),
-           FRic_median_diff = median_hdci(FRic_perc_diff, .width = 0.9)[["y"]],
-           FRic_median_diff_lo = median_hdci(FRic_perc_diff, .width = 0.9)[["ymin"]],
-           FRic_median_diff_hi = median_hdci(FRic_perc_diff, .width = 0.9)[["ymax"]],
+           FRic_median_diff = median_hdci(FRic_perc_diff, .width = 0.95)[["y"]],
+           FRic_median_diff_lo = median_hdci(FRic_perc_diff, .width = 0.95)[["ymin"]],
+           FRic_median_diff_hi = median_hdci(FRic_perc_diff, .width = 0.95)[["ymax"]],
            FRic_pd = p_direction(FRic_perc_diff),
-           FEve_median_diff = median_hdci(FEve_perc_diff, .width = 0.9)[["y"]],
-           FEve_median_diff_lo = median_hdci(FEve_perc_diff, .width = 0.9)[["ymin"]],
-           FEve_median_diff_hi = median_hdci(FEve_perc_diff, .width = 0.9)[["ymax"]],
+           FEve_median_diff = median_hdci(FEve_perc_diff, .width = 0.95)[["y"]],
+           FEve_median_diff_lo = median_hdci(FEve_perc_diff, .width = 0.95)[["ymin"]],
+           FEve_median_diff_hi = median_hdci(FEve_perc_diff, .width = 0.95)[["ymax"]],
            FEve_pd = p_direction(FEve_perc_diff),
-           FDiv_median_diff = median_hdci(FDiv_perc_diff, .width = 0.9)[["y"]],
-           FDiv_median_diff_lo = median_hdci(FDiv_perc_diff, .width = 0.9)[["ymin"]],
-           FDiv_median_diff_hi = median_hdci(FDiv_perc_diff, .width = 0.9)[["ymax"]],
+           FDiv_median_diff = median_hdci(FDiv_perc_diff, .width = 0.95)[["y"]],
+           FDiv_median_diff_lo = median_hdci(FDiv_perc_diff, .width = 0.95)[["ymin"]],
+           FDiv_median_diff_hi = median_hdci(FDiv_perc_diff, .width = 0.95)[["ymax"]],
            FDiv_pd = p_direction(FDiv_perc_diff),
-           FDis_median_diff = median_hdci(FDis_perc_diff, .width = 0.9)[["y"]],
-           FDis_median_diff_lo = median_hdci(FDis_perc_diff, .width = 0.9)[["ymin"]],
-           FDis_median_diff_hi = median_hdci(FDis_perc_diff, .width = 0.9)[["ymax"]],
+           FDis_median_diff = median_hdci(FDis_perc_diff, .width = 0.95)[["y"]],
+           FDis_median_diff_lo = median_hdci(FDis_perc_diff, .width = 0.95)[["ymin"]],
+           FDis_median_diff_hi = median_hdci(FDis_perc_diff, .width = 0.95)[["ymax"]],
            FDis_pd = p_direction(FDis_perc_diff)) %>% 
     select(., PD_median_diff:FDis_pd) %>%
     summarise_all(unique) %>% 
@@ -454,12 +452,19 @@ contrast_habitats <- contrast_habitats %>%
                      pd = FDis_pd) %>% 
               mutate(.,index = "FDis"))
 
-## 5.1.1 Plots for habitats ####
+# fix pd and save table (pd cannot be exactly 100)
+contrast_habitats %>% mutate(., pd = ifelse(pd == 1, 0.9999, pd)) %>%
+  write_csv (., file = "outputs/results_table_habs.csv")
+
+# fix labels for plotting as pd cannot be exactly 100
+contrast_habitats <- mutate(contrast_habitats, pd = ifelse(pd >= 0.985, 0.989, pd))
+
+## 4.1.1 Plots for habitats ####
 
 # Probability of direction plot
 ggplot(contrast_habitats, aes(x = contrast)) +
   geom_point(aes(y = pd, color = index))+  
-  geom_hline(yintercept = 0.975) +
+  geom_hline(yintercept = 0.95) +
   ylab("Probability of direction") +
   xlab("Habitat difference") +
   labs(color="Index") +
@@ -494,11 +499,11 @@ for (i in indices) {
 
 plot_medians_hab_arr <- ggarrange(plotlist =  plot_medians_hab,
                                   labels = "AUTO")
-
+plot_medians_hab_arr
   
 # # Ses metrics (This is a test, not definitive)
 # 
-# PD_FD_F %>% na.omit() %>% 
+# PD_FD_F %>% na.omit() %>%
 #   select(., starts_with("ses")) %>%
 #   mutate(., ZeroPD = sesPD >= -1.96 & sesPD <= 1.96,
 #          ZeroMPD = sesMPD >= -1.96 & sesMPD <= 1.96,
@@ -507,29 +512,29 @@ plot_medians_hab_arr <- ggarrange(plotlist =  plot_medians_hab,
 #          ZeroFEve = sesFEve >= -1.96 & sesFEve <= 1.96,
 #          ZeroFDiv = sesFDiv >= -1.96 & sesFDiv <= 1.96,
 #          ZeroFDis = sesFDis >= -1.96 & sesFDis <= 1.96) %>%
-#   select(., starts_with("Z")) %>% 
-#   summarise_all(., sum) %>% 
+#   select(., starts_with("Z")) %>%
+#   summarise_all(., sum) %>%
 #   mutate_all(., function(x) {(x/1000)*100}) %>%  view()
 # 
 # 
 # PD_FD_F %>%
-#   select(., starts_with("ses")) %>% 
-#   gather() %>% 
+#   select(., starts_with("ses")) %>%
+#   gather() %>%
 #   ggplot(aes(value)) +
 #   geom_density() +
 #   #geom_vline(xintercept = c(-1.96, 1.96)) +
 #   ggtitle("Forest") +
-#   facet_wrap(~ key, scales = "free") 
+#   facet_wrap(~ key, scales = "free")
 
 
-## 5.2 Differences between sharing/sparing ####
+## 4.2 Differences between sharing/sparing ####
 # compute median, Credible Intervals and p_direction
 
 # --- Low Yield ---
-n_pts <- unique(PD_FD_metrics_diff$n_pt)
+n_pts <- unique(PD_FD_farming_diff$n_pt)
 contrast_farm_low <- c()
 for (n in n_pts) {
-contrast_farm_low[[n]] <- PD_FD_metrics_diff %>% 
+contrast_farm_low[[n]] <- PD_FD_farming_diff %>% 
   filter(., n_pt == n, Yield == "Low") %>%
   mutate(., PD_perc_diff = (PD/((PD_sp + PD_sh)/2))*100,  ###computing percentage difference
          MPD_perc_diff = (MPD/((MPD_sp + MPD_sh)/2))*100,
@@ -540,41 +545,41 @@ contrast_farm_low[[n]] <- PD_FD_metrics_diff %>%
          FEve_perc_diff = (FEve/((FEve_sp + FEve_sh)/2))*100,
          FDiv_perc_diff = (FDiv/((FDiv_sp + FDiv_sh)/2))*100,
          FDis_perc_diff = (FDis/((FDis_sp + FDis_sh)/2))*100) %>% 
-  mutate(., PD_median_diff = median_hdci(PD_perc_diff, .width = 0.9)[["y"]],   ### computing median and p_direction
-         PD_median_diff_lo = median_hdci(PD_perc_diff, .width = 0.9)[["ymin"]],
-         PD_median_diff_hi = median_hdci(PD_perc_diff, .width = 0.9)[["ymax"]],
+  mutate(., PD_median_diff = median_hdci(PD_perc_diff, .width = 0.95)[["y"]],   ### computing median and p_direction
+         PD_median_diff_lo = median_hdci(PD_perc_diff, .width = 0.95)[["ymin"]],
+         PD_median_diff_hi = median_hdci(PD_perc_diff, .width = 0.95)[["ymax"]],
          PD_pd = p_direction(PD_perc_diff),
-         MPD_median_diff = median_hdci(MPD_perc_diff, .width = 0.9)[["y"]],
-         MPD_median_diff_lo = median_hdci(MPD_perc_diff, .width = 0.9)[["ymin"]],
-         MPD_median_diff_hi = median_hdci(MPD_perc_diff, .width = 0.9)[["ymax"]],
+         MPD_median_diff = median_hdci(MPD_perc_diff, .width = 0.95)[["y"]],
+         MPD_median_diff_lo = median_hdci(MPD_perc_diff, .width = 0.95)[["ymin"]],
+         MPD_median_diff_hi = median_hdci(MPD_perc_diff, .width = 0.95)[["ymax"]],
          MPD_pd = p_direction(MPD_perc_diff),
-         MNTD_median_diff = median_hdci(MNTD_perc_diff, .width = 0.9)[["y"]],
-         MNTD_median_diff_lo = median_hdci(MNTD_perc_diff, .width = 0.9)[["ymin"]],
-         MNTD_median_diff_hi = median_hdci(MNTD_perc_diff, .width = 0.9)[["ymax"]],
+         MNTD_median_diff = median_hdci(MNTD_perc_diff, .width = 0.95)[["y"]],
+         MNTD_median_diff_lo = median_hdci(MNTD_perc_diff, .width = 0.95)[["ymin"]],
+         MNTD_median_diff_hi = median_hdci(MNTD_perc_diff, .width = 0.95)[["ymax"]],
          MNTD_pd = p_direction(MNTD_perc_diff),
-         ED_median_diff = median_hdci(ED_perc_diff, .width = 0.9)[["y"]],
-         ED_median_diff_lo = median_hdci(ED_perc_diff, .width = 0.9)[["ymin"]],
-         ED_median_diff_hi = median_hdci(ED_perc_diff, .width = 0.9)[["ymax"]],
+         ED_median_diff = median_hdci(ED_perc_diff, .width = 0.95)[["y"]],
+         ED_median_diff_lo = median_hdci(ED_perc_diff, .width = 0.95)[["ymin"]],
+         ED_median_diff_hi = median_hdci(ED_perc_diff, .width = 0.95)[["ymax"]],
          ED_pd = p_direction(ED_perc_diff),
-         EDR_median_diff = median_hdci(EDR_perc_diff, .width = 0.9)[["y"]],
-         EDR_median_diff_lo = median_hdci(EDR_perc_diff, .width = 0.9)[["ymin"]],
-         EDR_median_diff_hi = median_hdci(EDR_perc_diff, .width = 0.9)[["ymax"]],
+         EDR_median_diff = median_hdci(EDR_perc_diff, .width = 0.95)[["y"]],
+         EDR_median_diff_lo = median_hdci(EDR_perc_diff, .width = 0.95)[["ymin"]],
+         EDR_median_diff_hi = median_hdci(EDR_perc_diff, .width = 0.95)[["ymax"]],
          EDR_pd = p_direction(EDR_perc_diff),
-         FRic_median_diff = median_hdci(FRic_perc_diff, .width = 0.9)[["y"]],
-         FRic_median_diff_lo = median_hdci(FRic_perc_diff, .width = 0.9)[["ymin"]],
-         FRic_median_diff_hi = median_hdci(FRic_perc_diff, .width = 0.9)[["ymax"]],
+         FRic_median_diff = median_hdci(FRic_perc_diff, .width = 0.95)[["y"]],
+         FRic_median_diff_lo = median_hdci(FRic_perc_diff, .width = 0.95)[["ymin"]],
+         FRic_median_diff_hi = median_hdci(FRic_perc_diff, .width = 0.95)[["ymax"]],
          FRic_pd = p_direction(FRic_perc_diff),
-         FEve_median_diff = median_hdci(FEve_perc_diff, .width = 0.9)[["y"]],
-         FEve_median_diff_lo = median_hdci(FEve_perc_diff, .width = 0.9)[["ymin"]],
-         FEve_median_diff_hi = median_hdci(FEve_perc_diff, .width = 0.9)[["ymax"]],
+         FEve_median_diff = median_hdci(FEve_perc_diff, .width = 0.95)[["y"]],
+         FEve_median_diff_lo = median_hdci(FEve_perc_diff, .width = 0.95)[["ymin"]],
+         FEve_median_diff_hi = median_hdci(FEve_perc_diff, .width = 0.95)[["ymax"]],
          FEve_pd = p_direction(FEve_perc_diff),
-         FDiv_median_diff = median_hdci(FDiv_perc_diff, .width = 0.9)[["y"]],
-         FDiv_median_diff_lo = median_hdci(FDiv_perc_diff, .width = 0.9)[["ymin"]],
-         FDiv_median_diff_hi = median_hdci(FDiv_perc_diff, .width = 0.9)[["ymax"]],
+         FDiv_median_diff = median_hdci(FDiv_perc_diff, .width = 0.95)[["y"]],
+         FDiv_median_diff_lo = median_hdci(FDiv_perc_diff, .width = 0.95)[["ymin"]],
+         FDiv_median_diff_hi = median_hdci(FDiv_perc_diff, .width = 0.95)[["ymax"]],
          FDiv_pd = p_direction(FDiv_perc_diff),
-         FDis_median_diff = median_hdci(FDis_perc_diff, .width = 0.9)[["y"]],
-         FDis_median_diff_lo = median_hdci(FDis_perc_diff, .width = 0.9)[["ymin"]],
-         FDis_median_diff_hi = median_hdci(FDis_perc_diff, .width = 0.9)[["ymax"]],
+         FDis_median_diff = median_hdci(FDis_perc_diff, .width = 0.95)[["y"]],
+         FDis_median_diff_lo = median_hdci(FDis_perc_diff, .width = 0.95)[["ymin"]],
+         FDis_median_diff_hi = median_hdci(FDis_perc_diff, .width = 0.95)[["ymax"]],
          FDis_pd = p_direction(FDis_perc_diff)) %>% 
   select(., PD_median_diff:FDis_pd) %>% 
   summarise_all(., unique)
@@ -589,7 +594,7 @@ contrast_farm_low <- bind_rows(contrast_farm_low, .id = "n_pt") %>%
 # --- High Yield ---
 contrast_farm_high <- c()
 for (n in n_pts) {
-  contrast_farm_high[[n]] <- PD_FD_metrics_diff %>% 
+  contrast_farm_high[[n]] <- PD_FD_farming_diff %>% 
     filter(., n_pt == n, Yield == "High") %>%
     mutate(., PD_perc_diff = (PD/((PD_sp + PD_sh)/2))*100,  ###computing percentage difference
            MPD_perc_diff = (MPD/((MPD_sp + MPD_sh)/2))*100,
@@ -600,41 +605,41 @@ for (n in n_pts) {
            FEve_perc_diff = (FEve/((FEve_sp + FEve_sh)/2))*100,
            FDiv_perc_diff = (FDiv/((FDiv_sp + FDiv_sh)/2))*100,
            FDis_perc_diff = (FDis/((FDis_sp + FDis_sh)/2))*100) %>% 
-    mutate(., PD_median_diff = median_hdci(PD_perc_diff, .width = 0.9)[["y"]],   ### computing median and p_direction
-           PD_median_diff_lo = median_hdci(PD_perc_diff, .width = 0.9)[["ymin"]],
-           PD_median_diff_hi = median_hdci(PD_perc_diff, .width = 0.9)[["ymax"]],
+    mutate(., PD_median_diff = median_hdci(PD_perc_diff, .width = 0.95)[["y"]],   ### computing median and p_direction
+           PD_median_diff_lo = median_hdci(PD_perc_diff, .width = 0.95)[["ymin"]],
+           PD_median_diff_hi = median_hdci(PD_perc_diff, .width = 0.95)[["ymax"]],
            PD_pd = p_direction(PD_perc_diff),
-           MPD_median_diff = median_hdci(MPD_perc_diff, .width = 0.9)[["y"]],
-           MPD_median_diff_lo = median_hdci(MPD_perc_diff, .width = 0.9)[["ymin"]],
-           MPD_median_diff_hi = median_hdci(MPD_perc_diff, .width = 0.9)[["ymax"]],
+           MPD_median_diff = median_hdci(MPD_perc_diff, .width = 0.95)[["y"]],
+           MPD_median_diff_lo = median_hdci(MPD_perc_diff, .width = 0.95)[["ymin"]],
+           MPD_median_diff_hi = median_hdci(MPD_perc_diff, .width = 0.95)[["ymax"]],
            MPD_pd = p_direction(MPD_perc_diff),
-           MNTD_median_diff = median_hdci(MNTD_perc_diff, .width = 0.9)[["y"]],
-           MNTD_median_diff_lo = median_hdci(MNTD_perc_diff, .width = 0.9)[["ymin"]],
-           MNTD_median_diff_hi = median_hdci(MNTD_perc_diff, .width = 0.9)[["ymax"]],
+           MNTD_median_diff = median_hdci(MNTD_perc_diff, .width = 0.95)[["y"]],
+           MNTD_median_diff_lo = median_hdci(MNTD_perc_diff, .width = 0.95)[["ymin"]],
+           MNTD_median_diff_hi = median_hdci(MNTD_perc_diff, .width = 0.95)[["ymax"]],
            MNTD_pd = p_direction(MNTD_perc_diff),
-           ED_median_diff = median_hdci(ED_perc_diff, .width = 0.9)[["y"]],
-           ED_median_diff_lo = median_hdci(ED_perc_diff, .width = 0.9)[["ymin"]],
-           ED_median_diff_hi = median_hdci(ED_perc_diff, .width = 0.9)[["ymax"]],
+           ED_median_diff = median_hdci(ED_perc_diff, .width = 0.95)[["y"]],
+           ED_median_diff_lo = median_hdci(ED_perc_diff, .width = 0.95)[["ymin"]],
+           ED_median_diff_hi = median_hdci(ED_perc_diff, .width = 0.95)[["ymax"]],
            ED_pd = p_direction(ED_perc_diff),
-           EDR_median_diff = median_hdci(EDR_perc_diff, .width = 0.9)[["y"]],
-           EDR_median_diff_lo = median_hdci(EDR_perc_diff, .width = 0.9)[["ymin"]],
-           EDR_median_diff_hi = median_hdci(EDR_perc_diff, .width = 0.9)[["ymax"]],
+           EDR_median_diff = median_hdci(EDR_perc_diff, .width = 0.95)[["y"]],
+           EDR_median_diff_lo = median_hdci(EDR_perc_diff, .width = 0.95)[["ymin"]],
+           EDR_median_diff_hi = median_hdci(EDR_perc_diff, .width = 0.95)[["ymax"]],
            EDR_pd = p_direction(EDR_perc_diff),
-           FRic_median_diff = median_hdci(FRic_perc_diff, .width = 0.9)[["y"]],
-           FRic_median_diff_lo = median_hdci(FRic_perc_diff, .width = 0.9)[["ymin"]],
-           FRic_median_diff_hi = median_hdci(FRic_perc_diff, .width = 0.9)[["ymax"]],
+           FRic_median_diff = median_hdci(FRic_perc_diff, .width = 0.95)[["y"]],
+           FRic_median_diff_lo = median_hdci(FRic_perc_diff, .width = 0.95)[["ymin"]],
+           FRic_median_diff_hi = median_hdci(FRic_perc_diff, .width = 0.95)[["ymax"]],
            FRic_pd = p_direction(FRic_perc_diff),
-           FEve_median_diff = median_hdci(FEve_perc_diff, .width = 0.9)[["y"]],
-           FEve_median_diff_lo = median_hdci(FEve_perc_diff, .width = 0.9)[["ymin"]],
-           FEve_median_diff_hi = median_hdci(FEve_perc_diff, .width = 0.9)[["ymax"]],
+           FEve_median_diff = median_hdci(FEve_perc_diff, .width = 0.95)[["y"]],
+           FEve_median_diff_lo = median_hdci(FEve_perc_diff, .width = 0.95)[["ymin"]],
+           FEve_median_diff_hi = median_hdci(FEve_perc_diff, .width = 0.95)[["ymax"]],
            FEve_pd = p_direction(FEve_perc_diff),
-           FDiv_median_diff = median_hdci(FDiv_perc_diff, .width = 0.9)[["y"]],
-           FDiv_median_diff_lo = median_hdci(FDiv_perc_diff, .width = 0.9)[["ymin"]],
-           FDiv_median_diff_hi = median_hdci(FDiv_perc_diff, .width = 0.9)[["ymax"]],
+           FDiv_median_diff = median_hdci(FDiv_perc_diff, .width = 0.95)[["y"]],
+           FDiv_median_diff_lo = median_hdci(FDiv_perc_diff, .width = 0.95)[["ymin"]],
+           FDiv_median_diff_hi = median_hdci(FDiv_perc_diff, .width = 0.95)[["ymax"]],
            FDiv_pd = p_direction(FDiv_perc_diff),
-           FDis_median_diff = median_hdci(FDis_perc_diff, .width = 0.9)[["y"]],
-           FDis_median_diff_lo = median_hdci(FDis_perc_diff, .width = 0.9)[["ymin"]],
-           FDis_median_diff_hi = median_hdci(FDis_perc_diff, .width = 0.9)[["ymax"]],
+           FDis_median_diff = median_hdci(FDis_perc_diff, .width = 0.95)[["y"]],
+           FDis_median_diff_lo = median_hdci(FDis_perc_diff, .width = 0.95)[["ymin"]],
+           FDis_median_diff_hi = median_hdci(FDis_perc_diff, .width = 0.95)[["ymax"]],
            FDis_pd = p_direction(FDis_perc_diff)) %>% 
     select(., PD_median_diff:FDis_pd) %>% 
     summarise_all(., unique)
@@ -712,7 +717,11 @@ contrast_farms <- contrast_farms %>%
                      pd = FDis_pd) %>% 
               mutate(.,index = "FDis"))
 
-## 5.2.1 Plots for sharing/sparing ####
+# fix pd and save table (pd cannot be exactly 100)
+contrast_farms %>% mutate(., pd = ifelse(pd == 1, 0.9999, pd)) %>%
+  write_csv (., file = "outputs/results_table_farm.csv")
+
+## 4.2.1 Plots for sharing/sparing ####
 
 # Probability of direction plot
 ggplot(contrast_farms, aes(x = n_pt)) + 
@@ -735,7 +744,7 @@ P_func_farm_medians <- function(x){
                    position = position_dodge2(width = 0.5)) +
       geom_text(aes(y = CI_high + (CI_high*0.05),
                     x = n_pt,
-                    label = ifelse(pd >= 0.9, "*", "")),
+                    label = ifelse(pd >= 0.95, "*", "")),
                 color = "black",
                 size = 6,
                 position = position_dodge2(width = 0.5)) +
@@ -758,9 +767,10 @@ plot_medians_farm_arr <- ggarrange(plotlist = plot_medians_farm,
                                    common.legend = T,
                                    legend = "bottom",
                                    labels = "AUTO")
+plot_medians_farm_arr
 
 # save plots
-ggsave("figures/medians_forest-pasture.png",
+ggsave("figures/prob_dir_plots_habs.png",
        plot_medians_hab_arr,
        width = 15,
        height = 15,
@@ -769,7 +779,7 @@ ggsave("figures/medians_forest-pasture.png",
        scale = 1.6)
 
 
-ggsave("figures/medians_sharing-sparing.png",
+ggsave("figures/prob_dir_plots_farming.png",
        plot_medians_farm_arr,
        width = 15,
        height = 15,
