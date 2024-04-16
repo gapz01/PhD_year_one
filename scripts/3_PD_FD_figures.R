@@ -1,4 +1,4 @@
-## Header ----
+## Header ---- 
 ## From paper: Avian phylogenetic and functional diversity are better conserved 
 ## by land-sparing than land-sharing farming in lowland tropical forests.
 ## Journal of Applied Ecology
@@ -13,7 +13,7 @@
 
 # Required packages
 library(tidyverse)
-library (viridis)
+library(viridis)
 library(patchwork)
 library(ggpubr)
 library(tidybayes)

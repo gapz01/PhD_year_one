@@ -1,4 +1,4 @@
-## Header ----
+## Header ---- 
 ## From paper: Avian phylogenetic and functional diversity are better conserved 
 ## by land-sparing than land-sharing farming in lowland tropical forests.
 ## Journal of Applied Ecology
@@ -23,7 +23,7 @@ library(DataCombine)     # Find&Replace values in a dataframes
 library(picante)         # randomizeMatrix function
 
 # Load phylogenies 
-phylogenies <- readRDS("data/phylogenies/AMAZON_birds_Hackett_ALL.rds")
+phylogenies <- readRDS("data/phylogenies/amazon_species_phylogeny.rds")
 phylogenies <- unlist(phylogenies, recursive = F)
 
 # For EDR
@@ -33,10 +33,10 @@ ED_values <- readRDS("data/ED_values.rds")
 func_space_coords <- readRDS("outputs/func_space_coords.rds")
 
 # load simulated communities
-comms_sh_high <- readRDS("data/comms_sh_high.rds")
-comms_sh_low <- readRDS("data/comms_sh_low.rds")
-comms_sp_high <- readRDS("data/comms_sp_high.rds")
-comms_sp_low <- readRDS("data/comms_sp_low.rds")
+comms_sh_high <- readRDS("outputs/comms_sh_high.rds")
+comms_sh_low <- readRDS("outputs/comms_sh_low.rds")
+comms_sp_high <- readRDS("outputs/comms_sp_high.rds")
+comms_sp_low <- readRDS("outputs/comms_sp_low.rds")
 
 # Set size of management units (landscape sizes) 
 n_pts <- c(10, seq(50, 450, 50))           

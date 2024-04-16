@@ -1,4 +1,4 @@
-## Header ----
+## Header ---- 
 ## From paper: Avian phylogenetic and functional diversity are better conserved 
 ## by land-sparing than land-sharing farming in lowland tropical forests.
 ## Journal of Applied Ecology
@@ -31,7 +31,7 @@ names_to_remove_from_model <- correct_names %>%
   pull(., model)
 
 # Load phylogenies 
-phylogenies <- readRDS("data/AMAZON_birds_Hackett_ALL.rds")
+phylogenies <- readRDS("data/amazon_species_phylogeny.rds")
 phylogenies <- unlist(phylogenies, recursive = F)
 
 # For EDR
