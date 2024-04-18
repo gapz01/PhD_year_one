@@ -25,17 +25,17 @@ library(picante)         # randomizeMatrix function
 readRDS("outputs/Z_mats.rds")
 
 # Load lookup table to match names to phylogenies names
-correct_names <- readRDS("data/amazon_species_lookup.rds")
+correct_names <- read_csv("data/names_lookup_amazonbirds.csv")
 names_to_remove_from_model <- correct_names %>% 
   filter(., phylogeny == "Not_in_phylogeny") %>% 
   pull(., model)
 
 # Load phylogenies 
-phylogenies <- readRDS("data/amazon_species_phylogeny.rds")
+phylogenies <- readRDS("data/phylogeny_amazonbirds.rds")
 phylogenies <- unlist(phylogenies, recursive = F)
 
 # For EDR
-ED_values <- readRDS("data/ED_values.rds")
+ED_values <- read_csv("data/ED_values_amazonbirds.csv")
  
 # Functional space
 readRDS("outputs/func_space_coords.rds")

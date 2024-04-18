@@ -19,24 +19,17 @@ library(tidyverse)       # Data handling and plots
 library(DataCombine)     # Find&Replace values in a dataframes
 
 # final dataframe
-DF <- read_csv ("data/Bird_DF.csv")
+DF <- read_csv ("data/dataset_raw_amazonbirds.csv")
 
 # Load lookup tables to match names (differing taxonomic nomenclature)
-correct_names <- readRDS("data/amazon_species_lookup.rds")
-
+correct_names <- read_csv("data/names_lookup_amazonbirds.csv")
 names_to_remove_from_model <- correct_names %>% 
   filter(., phylogeny == "Not_in_phylogeny") %>% 
   pull(., model)
 
-# Phylogenies 
-phylogenies <- readRDS("data/amazon_species_phylogeny.rds")
-phylogenies <- unlist(phylogenies, recursive = F)
-
-# precomputed values of evolutionary metrics
-ED_values <- readRDS("data/ED_values.rds")
 
 # --Pre-processing of functional space--
-func_traits <- read_csv("data/functional_traits_amazon.csv") %>% 
+func_traits <- read_csv("data/functional_traits_amazonbirds.csv") %>% 
   mutate_at(., c("Trophic_Level", "Trophic_Niche", "Primary_Lifestyle", "Nest_Placement"), as.factor) %>%
   arrange(., species) %>% 
   column_to_rownames(., "species")
@@ -66,17 +59,15 @@ func_space_coords <-
 #Save this to be used in script 2
 saveRDS(func_space_coords, "outputs/func_space_coords.rds")
 
-# #If loading model
-# mod <- readRDS("data/Bird_flocker_model_cluster_hab.rds")                  
+# #If loading model (below)
+# mod <- readRDS("outputs/mod.rds")
 # class(mod) <- c("brmsfit", "flocker_fit")
 # attributes(mod)$data_type <- "single"
 
 
-
-
 # 1. Modelling ####
 
-### 1.1 Hierarchical models ####
+### 1.1 Hierarchical model ####
 
 #Format data to be used in package flocker
 #make observation matrix
@@ -118,7 +109,7 @@ mod <- flocker::flock(f_occ = ~ 1 + forest_dependency +
                       prior = priors,
                       chains = 4, cores = 4, iter = 2000,
                       backend = "cmdstanr",
-                      file = "data/mod.rds")
+                      file = "outputs/mod.rds")
 
 # check convergence
 summary(mod)

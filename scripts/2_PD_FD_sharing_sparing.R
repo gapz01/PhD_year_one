@@ -23,11 +23,11 @@ library(DataCombine)     # Find&Replace values in a dataframes
 library(picante)         # randomizeMatrix function
 
 # Load phylogenies 
-phylogenies <- readRDS("data/phylogenies/amazon_species_phylogeny.rds")
+phylogenies <- readRDS("data/phylogeny_amazonbirds.rds")
 phylogenies <- unlist(phylogenies, recursive = F)
 
 # For EDR
-ED_values <- readRDS("data/ED_values.rds")
+ED_values <- read_csv("data/ED_values_amazonbirds.csv")
 
 # functional space
 func_space_coords <- readRDS("outputs/func_space_coords.rds")
